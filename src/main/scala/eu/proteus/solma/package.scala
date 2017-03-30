@@ -20,7 +20,6 @@ package eu.proteus
 
 import org.apache.flink.api.common.functions.FoldFunction
 import org.apache.flink.api.common.typeinfo.TypeInformation
-import org.apache.flink.api.scala.ClosureCleaner
 import org.apache.flink.streaming.api.scala._
 
 package object solma {

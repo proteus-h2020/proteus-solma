@@ -23,6 +23,7 @@ import eu.proteus.solma.utils.FlinkTestBase
 import org.apache.flink.ml.math.{DenseVector, Vector}
 import org.apache.flink.streaming.api.scala._
 import org.scalatest.{FlatSpec, Matchers}
+import org.slf4j.LoggerFactory
 
 @Proteus
 class ReservoirSamplingITSuite
@@ -31,7 +32,6 @@ class ReservoirSamplingITSuite
     with FlinkTestBase {
 
   behavior of "Flink's Reservoir Sampling"
-
 
   it should "perform reservoir sampling" in {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
@@ -43,7 +43,7 @@ class ReservoirSamplingITSuite
     val transformer = SimpleReservoirSampling()
       .setReservoirSize(5)
 
-    transformer.transform(stream).print()
+    transformer.transform(stream)
 
     env.execute("reservoir sampling")
   }
