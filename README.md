@@ -8,7 +8,7 @@
 - Copy ``` ./target/proteus-solma_x.xx-x.x-SNAPSHOT-jar-with-dependencies.jar ``` to related repo under ``` ~/.m2/ ```
 - To use SOLMA library, create Maven project in your favorite IDE
 - Import flink client dependency from maven [2] and copied jar file under ``` ./m2 ```
-- For simple examples, please look at unit tests.
+- For simple examples, please look at [unit tests](src/test/scala/eu/proteus/solma).
 
 
 
