@@ -20,12 +20,44 @@ package eu.proteus.solma.utils
 
 import eu.proteus.annotations.Proteus
 import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.util.XORShiftRandom
 
 @Proteus
 object FlinkSolmaUtils {
   def registerFlinkMLTypes(env: StreamExecutionEnvironment): Unit = {
+
+    // Vector types
+    env.registerType(classOf[org.apache.flink.ml.math.DenseVector])
+    env.registerType(classOf[org.apache.flink.ml.math.SparseVector])
+
+    // Matrix types
+    env.registerType(classOf[org.apache.flink.ml.math.DenseMatrix])
+    env.registerType(classOf[org.apache.flink.ml.math.SparseMatrix])
+
+    // Breeze Vector types
+    env.registerType(classOf[breeze.linalg.DenseVector[_]])
+    env.registerType(classOf[breeze.linalg.SparseVector[_]])
+
+    // Breeze specialized types
+    env.registerType(breeze.linalg.DenseVector.zeros[Double](0).getClass)
+    env.registerType(breeze.linalg.SparseVector.zeros[Double](0).getClass)
+
+    // Breeze Matrix types
+    env.registerType(classOf[breeze.linalg.DenseMatrix[Double]])
+    env.registerType(classOf[breeze.linalg.CSCMatrix[Double]])
+
+    // Breeze specialized types
+    env.registerType(breeze.linalg.DenseMatrix.zeros[Double](0, 0).getClass)
+    env.registerType(breeze.linalg.CSCMatrix.zeros[Double](0, 0).getClass)
+  }
+
+  /**
+   * Register the data types used in SOLMA into the flink environment.
+   * @param env The [[StreamExecutionEnvironment]].
+   */
+  def registerFlinkMLTypes(env: ExecutionEnvironment): Unit = {
 
     // Vector types
     env.registerType(classOf[org.apache.flink.ml.math.DenseVector])
