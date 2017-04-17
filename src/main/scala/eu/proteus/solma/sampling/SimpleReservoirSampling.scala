@@ -25,6 +25,7 @@ import SimpleReservoirSampling.ReservoirSize
 import eu.proteus.annotations.Proteus
 import eu.proteus.solma.pipeline.{StreamFitOperation, StreamTransformer, TransformDataStreamOperation}
 import eu.proteus.solma.utils.FlinkSolmaUtils
+import org.apache.flink.api.scala.DataSet
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.util.XORShiftRandom
 
@@ -65,7 +66,7 @@ object SimpleReservoirSampling {
       override def fit(
           instance: SimpleReservoirSampling,
           fitParameters: ParameterMap,
-          input: DataStream[T])
+          input: DataSet[T])
         : Unit = {}
     }
   }

@@ -18,6 +18,7 @@
 
 package eu.proteus.solma.pipeline
 
+import org.apache.flink.api.scala.DataSet
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala._
 
@@ -66,9 +67,10 @@ object ChainedStreamTransformer {
       override def fit(
           instance: ChainedStreamTransformer[L, R],
           fitParameters: ParameterMap,
-          input: DataStream[I]): Unit = {
-        val intermediateResult = instance.left.transform(input, fitParameters)
-        instance.right.fit(intermediateResult, fitParameters)
+          input: DataSet[I]): Unit = {
+        // TODO Check implementation
+        // val intermediateResult = instance.left.transform(input, fitParameters)
+        // instance.right.fit(intermediateResult, fitParameters)
       }
     }
   }

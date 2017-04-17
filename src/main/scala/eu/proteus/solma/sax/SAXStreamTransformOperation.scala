@@ -22,6 +22,7 @@ import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala.createTypeInformation
 import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
+import org.apache.flink.contrib.streaming.scala.utils.DataStreamUtils
 import org.apache.flink.util.Collector
 
 class SAXStreamTransformOperation[T] extends TransformDataStreamOperation[SAX, T, String]{
@@ -37,22 +38,33 @@ class SAXStreamTransformOperation[T] extends TransformDataStreamOperation[SAX, T
       throw new RuntimeException("You must train the SAX before calling transform")
     }
 
-    val norm : DataStream[Double] = input.map(x =>
-      this.zNormalize(x.toString.toDouble, avg.get, std.get))
-
     val wordSize = instance.getWordSize()
     val paaFragmentSize = instance.getPAAFragmentSize()
 
-    val avgWindowFunction = new AllWindowFunction[Double, Double, GlobalWindow] {
-      override def apply(window: GlobalWindow, input: Iterable[Double], out: Collector[Double]): Unit = {
-        val avg = input.foldLeft(0.0)(_ + _) / input.foldLeft(0)((acc, cur) => acc + 1)
+    val avgNormWindowFunction = new AllWindowFunction[T, Double, GlobalWindow] {
+      override def apply(window: GlobalWindow, input: Iterable[T], out: Collector[Double]): Unit = {
+
+        val norm = input.map(in => {(in.toString.toDouble - instance.trainingAvg.get) / instance.trainingStd.get})
+
+        val avg = norm.foldLeft(0.0)(_ + _) / norm.foldLeft(0)((acc, cur) => acc + 1)
+        // println(s"Input: ${input.mkString(", ")} => ${norm.mkString(", ")} => PAA => ${avg}")
         out.collect(avg)
       }
     }
 
-    val paa = norm.countWindowAll(paaFragmentSize).apply(avgWindowFunction)
+    val paaNorm = input.countWindowAll(paaFragmentSize).apply(avgNormWindowFunction)
 
-    paa.map(_.toString)
+    val cuts = instance.getAlphabetCuts()
+
+    val saxTransformFunction = new AllWindowFunction[Double, String, GlobalWindow] {
+      override def apply(window: GlobalWindow, input: Iterable[Double], out: Collector[String]): Unit = {
+        val word = input.map(Cuts.findLetter(cuts, _)).mkString
+        // println(s"Word: ${word}")
+        out.collect(word)
+      }
+    }
+
+    paaNorm.countWindowAll(wordSize).apply(saxTransformFunction)
 
   }
 
@@ -67,6 +79,7 @@ class SAXStreamTransformOperation[T] extends TransformDataStreamOperation[SAX, T
    * @return A normalized value.
    */
   private def zNormalize(number: Double, avg: Double, std: Double) : Double = {
+    println(s"zN(${number}) = " + (number - avg) / std)
     (number - avg) / std
   }
 

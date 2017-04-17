@@ -20,7 +20,6 @@ import eu.proteus.solma.pipeline.StreamFitOperation
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.api.scala.createTypeInformation
 import org.apache.flink.ml.common.ParameterMap
-import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.util.Collector
 import org.slf4j.Logger
 
@@ -55,7 +54,7 @@ class SAXStreamFitOperation[T] extends StreamFitOperation[SAX, T]{
       (curr: Iterator[Double], collector: Collector[(Double, Double, Double)]) => {
         var acc = (0.0d, 0.0d, 0.0d)
         curr.foreach((x) => {
-          acc = (acc._1 + x * x, acc._2 + x, acc._3 + 1)
+          acc = (acc._1 + (x * x), acc._2 + x, acc._3 + 1)
         })
         collector.collect(acc)
       }
@@ -77,8 +76,5 @@ class SAXStreamFitOperation[T] extends StreamFitOperation[SAX, T]{
 
   }
 
-  override def fit(instance: SAX, fitParameters: ParameterMap, input: DataStream[T]): Unit = {
-    throw new UnsupportedOperationException
-  }
 }
 

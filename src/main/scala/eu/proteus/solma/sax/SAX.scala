@@ -147,6 +147,18 @@ class SAX extends StreamTransformer[SAX]{
     this
   }
 
+  /**
+   * Get the size of the alphabet.
+   * @return
+   */
+  def getAlphabetSize() : Int = {
+    this.parameters.get(SAX.AlphabetSize).get
+  }
+
+  private[sax] def getAlphabetCuts() : Array[Double] = {
+    Cuts.breakpoints(this.getAlphabetSize())
+  }
+
   def getFittedParameters() : Option[(Double, Double)] = {
     if(this.trainingAvg.isDefined && this.trainingStd.isDefined){
       Some((this.trainingAvg.get, this.trainingStd.get))

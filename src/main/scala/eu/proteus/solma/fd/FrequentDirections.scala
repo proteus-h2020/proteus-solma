@@ -30,6 +30,7 @@ import org.apache.flink.streaming.api.scala._
 import eu.proteus.solma._
 import breeze.linalg.svd.{SVD => BreezeSVD}
 import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, Vector => BreezeVector}
+import org.apache.flink.api.scala.DataSet
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -91,7 +92,7 @@ object FrequentDirections {
       override def fit(
           instance: FrequentDirections,
           fitParameters: ParameterMap,
-          input: DataStream[T])
+          input: DataSet[T])
         : Unit = {}
     }
   }

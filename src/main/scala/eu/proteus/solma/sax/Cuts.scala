@@ -38,6 +38,12 @@ package eu.proteus.solma.sax
 object Cuts{
 
   /**
+   * The alphabet for the words.
+   */
+  private val Alphabet : Array[Char] = Array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+    'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' )
+
+  /**
    * Breakpoints for 2 areas.
    */
   private val Cuts2 : Array[Double] = Array(0.0d)
@@ -70,6 +76,20 @@ object Cuts{
       case 2 => Cuts.Distances2
       case _ => throw new RuntimeException("Number of cuts not supported")
     }
+  }
+
+  /**
+   * Find the letter associated with a given number using a set of cuts.
+   * @param cuts The cuts.
+   * @param number The number.
+   * @return A character.
+   */
+  def findLetter(cuts: Array[Double], number: Double) : Char = {
+    var position : Int = 0
+    while((position < cuts.length) && (cuts(position) <= number)){
+      position = position + 1
+    }
+    Cuts.Alphabet(position)
   }
 
 }

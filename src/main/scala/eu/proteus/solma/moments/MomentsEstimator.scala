@@ -28,6 +28,7 @@ import org.apache.flink.ml.common.ParameterMap
 import eu.proteus.solma._
 import org.apache.flink.streaming.api.scala._
 import breeze.linalg.{Vector => BreezeVector}
+import org.apache.flink.api.scala.DataSet
 
 import scala.collection.mutable
 
@@ -103,7 +104,7 @@ object MomentsEstimator {
       override def fit(
           instance: MomentsEstimator,
           fitParameters: ParameterMap,
-          input: DataStream[T])
+          input: DataSet[T])
         : Unit = {}
     }
   }

@@ -17,21 +17,25 @@
 package eu.proteus.solma.sax
 
 import eu.proteus.solma.utils.FlinkTestBase
-import org.apache.flink.api.common.typeinfo.BasicTypeInfo
-import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
-import org.apache.flink.contrib.streaming.DataStreamUtils
+import org.apache.flink.contrib.streaming.scala.utils.DataStreamUtils
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import org.apache.flink.api.scala.createTypeInformation
 import eu.proteus.solma.sax.SAX.fitImplementation
 import eu.proteus.solma.sax.SAX.transformImplementation
-import scala.collection.JavaConverters.asScalaIteratorConverter
+import org.scalactic.TolerantNumerics
 
-import scala.collection.mutable
+object SAXITSuite {
+
+  /**
+   * Epsilon for double comparisons.
+   */
+  private val DoubleEps : Double = 0.0001
+}
 
 /**
  * SAX tests.
@@ -70,20 +74,40 @@ class SAXITSuite extends FunSuite with Matchers with FlinkTestBase{
     assertResult(expected._2, "Invalid std")(fitted.get._2)
   }
 
-  test("Basic transform with 5 elements"){
-    val env = ExecutionEnvironment.createLocalEnvironment(4)
-    val trainingData : Seq[Double] = List(0.0d, 1.0d, 2.0d, 3.0d, 4.0d)
+  test("Basic fit with 15 elements"){
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(4)
+    val trainingData : Seq[Double] = List(2, 3, 4, 8, 8, 9, 8, 6, 6, 5, 5, 5, 6, 2, 1)
+    val dataset : DataSet[Double] = env.fromCollection(trainingData)
+    val sax = new SAX()
+    sax.fit(dataset)
+    sax.printInternalParameters()
+    val expected = this.getStatistics(trainingData)
+    val fitted = sax.getFittedParameters()
+    assert(fitted.isDefined, "Expected fitted parameters")
+    assert(expected._1 === (fitted.get._1 +- SAXITSuite.DoubleEps), "Invalid avg")
+    assert(expected._2 === (fitted.get._2 +- SAXITSuite.DoubleEps), "Invalid std")
+  }
+
+  test("Dictionary with 2 symbols"){
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val trainingData : Seq[Double] = List(2, 3, 4, 8, 8, 9, 8, 6, 6, 5, 5, 5, 6, 2, 1)
     val trainingDataSet : DataSet[Double] = env.fromCollection(trainingData)
-    val streamingEnv = StreamExecutionEnvironment.createLocalEnvironment(4)
-    streamingEnv.fromCollection(trainingData)
+    val streamingEnv = StreamExecutionEnvironment.getExecutionEnvironment
+    streamingEnv.setParallelism(4)
+    streamingEnv.setMaxParallelism(4)
     val evalDataSet : DataStream[Double] = streamingEnv.fromCollection(trainingData)
-    val sax = new SAX().setPAAFragmentSize(1).setWordSize(2)
+    val sax = new SAX().setPAAFragmentSize(3).setWordSize(1)
     sax.fit(trainingDataSet)
     sax.printInternalParameters()
-    val pre : DataStream[String] = sax.transform(evalDataSet)
-    val result : Iterator[String] = DataStreamUtils.collect[String](pre.javaStream).asScala
-    streamingEnv.execute()
-    println("Result: " + result.mkString(", "))
+    val transformed = sax.transform(evalDataSet)
+    val result : List[String] = transformed.collect().toList
+    val job = streamingEnv.execute()
+    println(s"Result: ${result.mkString(", ")}")
+    val expected : Seq[String] = List("a", "b", "b", "a", "a")
+    assert(result === expected, "Result should match")
   }
+
+
 
 }
