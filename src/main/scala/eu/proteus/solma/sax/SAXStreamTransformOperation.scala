@@ -83,9 +83,5 @@ class SAXStreamTransformOperation[T] extends TransformDataStreamOperation[SAX, T
     (number - avg) / std
   }
 
-  private[sax] def obtainSymbol() : String = {
-    "s"
-  }
-
 }
 
