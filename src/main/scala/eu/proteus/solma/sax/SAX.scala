@@ -23,6 +23,9 @@ import org.slf4j.Logger
 /**
  * Implementation of the SAX-VSM algorithm.
  *
+ * This class contains the implementation to extract words from a signal given a number of elements
+ * to be averaged using PAA, a size of the alphabet, and the length of the words to be generated.
+ *
  * References:
  * Senin, Pavel, and Sergey Malinchik. "Sax-vsm: Interpretable time series classification using
  * SAX and vector space model." Data Mining (ICDM), 2013 IEEE 13th International Conference on.
