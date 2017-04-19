@@ -60,7 +60,7 @@ class SAXDictionaryFitOperation[T] extends StreamFitOperation[SAXDictionary, T]{
 
     val result = fitting.collect()
     if(result.size != 1){
-      throw new RuntimeException("Expecting to recieve a single dictionary")
+      throw new RuntimeException("Expecting to receive a single dictionary")
     }
 
     if(instance.dictionary.isEmpty){
@@ -69,6 +69,11 @@ class SAXDictionaryFitOperation[T] extends StreamFitOperation[SAXDictionary, T]{
       instance.dictionary.get.bags.putAll(result.head.bags)
     }
 
+    if(instance.dictionary.isEmpty){
+      throw new RuntimeException("Unable to build class dictionary")
+    }else{
+      instance.dictionary.get.buildTFIDFMatrix()
+    }
 
   }
 }
