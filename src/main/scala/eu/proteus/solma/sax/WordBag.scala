@@ -41,7 +41,7 @@ case class WordBag(
    * @param vector The vector.
    * @return The similarity.
    */
-  def similarity(vector: JMap[String, Long]) : Double = {
+  def similarity(vector: JMap[String, AtomicLong]) : Double = {
     val keys = new JHashSet[String](vector.keySet())
     keys.addAll(this.tfIdf.keySet())
     val instance = this
@@ -51,7 +51,7 @@ case class WordBag(
     keys.forEach(new Consumer[String] {
       override def accept(word: String): Unit = {
         val a = instance.tfIdf.getOrDefault(word, 0.0d)
-        val b = vector.getOrDefault(word, 0)
+        val b = vector.getOrDefault(word, new AtomicLong(0)).get()
         sumTotal = sumTotal + (a*b)
         aSquared = aSquared + (a*a)
         bSquared = bSquared + (b*b)

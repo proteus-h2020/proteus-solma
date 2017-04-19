@@ -103,7 +103,6 @@ class SAXITSuite extends FunSuite with Matchers with FlinkTestBase{
     val transformed = sax.transform(evalDataSet)
     val r : Iterator[String] = transformed.collect()
     val job = streamingEnv.execute()
-    val exec = job.getJobExecutionResult
     val result = r.toList
     println(s"Result: ${result.mkString(", ")}")
     val expected : Seq[String] = List("a", "b", "b", "a", "a")

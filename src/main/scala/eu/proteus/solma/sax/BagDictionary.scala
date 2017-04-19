@@ -67,8 +67,11 @@ case class BagDictionary(bags : JMap[String, WordBag] = new JHashMap[String, Wor
    *
    * {{{
    *   tfIdf(word_k, class_i) = log( 1 + freq(word_k, class_i)) x
-   *     log ( num_classes / bagsWithWord(word_k))
+   *     1 + log ( num_classes / bagsWithWord(word_k))
    * }}}
+   *
+   * Notice that the IDF part of the equation is incremented by one as to allow the dictionary
+   * to work under single-class scenarios.
    *
    */
   def buildTFIDFMatrix() : Unit = {
@@ -80,7 +83,7 @@ case class BagDictionary(bags : JMap[String, WordBag] = new JHashMap[String, Wor
         e.getValue.words.forEach(new BiConsumer[String, AtomicLong] {
           override def accept(word: String, freq: AtomicLong): Unit = {
             val wordTfIdf = Math.log(1 + freq.get()) *
-              Math.log(numClasses / dictionary.bagsWithWord(word))
+              (1 + Math.log(numClasses / dictionary.bagsWithWord(word)))
             tfIdf.put(word, wordTfIdf)
           }
         })
@@ -88,6 +91,31 @@ case class BagDictionary(bags : JMap[String, WordBag] = new JHashMap[String, Wor
       }
     })
 
+  }
+
+
+  /**
+   * Predict the class of a given vector.
+   * @param vector The vector to be compared.
+   * @return A [[SAXPrediction]].
+   */
+  def predict(vector: JMap[String, AtomicLong]) : SAXPrediction = {
+
+    if(this.bags.isEmpty){
+      throw new RuntimeException("No classes available for prediction")
+    }
+
+    var result : Option[SAXPrediction] = None
+    this.bags.values().forEach(new Consumer[WordBag] {
+      override def accept(wb: WordBag) : Unit = {
+        val similarity = wb.similarity(vector)
+        if(result.isEmpty || result.get.similarity < similarity){
+          result = Some(new SAXPrediction(wb.id.get, similarity))
+        }
+      }
+    })
+
+    result.get
   }
 
 
