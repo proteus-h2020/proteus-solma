@@ -18,59 +18,57 @@
 
 package eu.proteus.solma.pipeline
 
-import org.apache.flink.api.scala.DataSet
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala._
 
 case class ChainedStreamTransformer[
-    L <: StreamTransformer[L],
-    R <: StreamTransformer[R]
-  ](left: L, right: R)
+L <: StreamTransformer[L],
+R <: StreamTransformer[R]
+](left: L, right: R)
   extends StreamTransformer[ChainedStreamTransformer[L, R]] {
 }
 
 object ChainedStreamTransformer {
-   implicit def chainedStreamTransformOperation[
-      L <: StreamTransformer[L],
-      R <: StreamTransformer[R],
-      I,
-      T,
-      O](implicit
-      transformOpLeft: TransformDataStreamOperation[L, I, T],
-      transformOpRight: TransformDataStreamOperation[R, T, O])
-    : TransformDataStreamOperation[ChainedStreamTransformer[L,R], I, O] = {
+  implicit def chainedStreamTransformOperation[
+  L <: StreamTransformer[L],
+  R <: StreamTransformer[R],
+  I,
+  T,
+  O](implicit
+    transformOpLeft: TransformDataStreamOperation[L, I, T],
+    transformOpRight: TransformDataStreamOperation[R, T, O])
+  : TransformDataStreamOperation[ChainedStreamTransformer[L,R], I, O] = {
     new TransformDataStreamOperation[ChainedStreamTransformer[L, R], I, O] {
       override def transformDataStream(
-          instance: ChainedStreamTransformer[L, R],
-          transformParameters: ParameterMap,
-          input: DataStream[I]): DataStream[O] = {
+        instance: ChainedStreamTransformer[L, R],
+        transformParameters: ParameterMap,
+        input: DataStream[I]): DataStream[O] = {
         val intermediateResult = transformOpLeft.transformDataStream(
           instance.left,
           transformParameters,
           input)
         transformOpRight.transformDataStream(
-            instance.right,
-            transformParameters,
-            intermediateResult
+          instance.right,
+          transformParameters,
+          intermediateResult
         )
       }
     }
   }
 
   implicit def chainedStreamFitOperation[
-      L <: StreamTransformer[L], R <: StreamTransformer[R], I, T](
-      implicit leftFitOperation: StreamFitOperation[L, I],
-      leftTransformOperation: TransformDataStreamOperation[L, I, T],
-      rightFitOperation: StreamFitOperation[R, T])
+  L <: StreamTransformer[L], R <: StreamTransformer[R], I, T](
+    implicit leftFitOperation: StreamFitOperation[L, I],
+    leftTransformOperation: TransformDataStreamOperation[L, I, T],
+    rightFitOperation: StreamFitOperation[R, T])
   : StreamFitOperation[ChainedStreamTransformer[L, R], I] = {
     new StreamFitOperation[ChainedStreamTransformer[L, R], I] {
       override def fit(
-          instance: ChainedStreamTransformer[L, R],
-          fitParameters: ParameterMap,
-          input: DataSet[I]): Unit = {
-        // TODO Check implementation
-        // val intermediateResult = instance.left.transform(input, fitParameters)
-        // instance.right.fit(intermediateResult, fitParameters)
+        instance: ChainedStreamTransformer[L, R],
+        fitParameters: ParameterMap,
+        input: DataStream[I]): Unit = {
+        val intermediateResult = instance.left.transform(input, fitParameters)
+        instance.right.fit(intermediateResult, fitParameters)
       }
     }
   }

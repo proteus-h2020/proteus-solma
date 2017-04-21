@@ -2,6 +2,7 @@ package eu.proteus.solma.sax
 
 import eu.proteus.solma.pipeline.StreamPredictor
 import org.apache.flink.ml.common.Parameter
+import org.apache.flink.ml.pipeline.Estimator
 
 /**
  * Implementation of the SAX-VSM algorithm.
@@ -50,7 +51,7 @@ object SAXDictionary{
 }
 
 
-class SAXDictionary extends StreamPredictor[SAXDictionary]{
+class SAXDictionary extends StreamPredictor[SAXDictionary] with Estimator[SAXDictionary]{
 
   /**
    * The dictionary.

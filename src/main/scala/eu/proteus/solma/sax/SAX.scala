@@ -18,6 +18,7 @@ package eu.proteus.solma.sax
 
 import eu.proteus.solma.pipeline.StreamTransformer
 import org.apache.flink.ml.common.Parameter
+import org.apache.flink.ml.pipeline.Estimator
 import org.slf4j.Logger
 
 /**
@@ -78,7 +79,7 @@ object SAX {
   }
 
   implicit def fitImplementation[T] = {
-    new SAXStreamFitOperation[T]
+    new SAXFitOperation[T]
   }
 
   implicit def transformImplementation[T] = {
@@ -90,7 +91,7 @@ object SAX {
 /**
  * SAX transformer.
  */
-class SAX extends StreamTransformer[SAX]{
+class SAX extends StreamTransformer[SAX] with Estimator[SAX]{
 
   import eu.proteus.solma.sax.SAX.Log
 

@@ -69,8 +69,6 @@ class SAXDictionaryITSuite extends FunSuite with Matchers with FlinkTestBase {
 
     val predictions = evalDictionary.predict[String, SAXPrediction](evalDataSet)
     val r : Iterator[SAXPrediction] = predictions.collect()
-    val job = streamingEnv.execute()
-    val exec = job.getJobExecutionResult
     val result = r.toList
     assertResult(4, "Invalid number of predictions")(result.size)
     assertResult(1.0, "Expecting perfect similarity")(result.head.similarity)
@@ -106,10 +104,7 @@ class SAXDictionaryITSuite extends FunSuite with Matchers with FlinkTestBase {
 
     val predictions = evalDictionary.predict[String, SAXPrediction](evalDataSet)
     val r : Iterator[SAXPrediction] = predictions.collect()
-    val job = streamingEnv.execute()
-    val exec = job.getJobExecutionResult
     val result = r.toList
-    println("Result: " + result.mkString(", "))
     assertResult(4, "Invalid number of predictions")(result.size)
     assertResult(1.0, "Expecting perfect similarity")(result.head.similarity)
     assertResult("1", "Expecting match on class 1")(result.head.classId)

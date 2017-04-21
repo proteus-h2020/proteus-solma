@@ -19,7 +19,6 @@
 package eu.proteus.solma.pipeline
 
 import eu.proteus.solma.utils.FlinkSolmaUtils
-import org.apache.flink.api.scala.DataSet
 import org.apache.flink.ml.common.{ParameterMap, WithParameters}
 import org.apache.flink.streaming.api.scala._
 
@@ -31,17 +30,17 @@ trait StreamEstimator[Self] extends WithParameters with Serializable {
   /** Fits the estimator to the given input data. The fitting logic is contained in the
    * [[StreamFitOperation]]. The computed state will be stored in the implementing class.
    *
-   * @param training Training data set
+   * @param training Training data stream
    * @param fitParameters Additional parameters for the [[StreamFitOperation]]
    * @param fitOperation [[StreamFitOperation]] which encapsulates the algorithm logic
    * @tparam Training Type of the training data
    * @return
    */
   def fit[Training](
-    training: DataSet[Training],
+    training: DataStream[Training],
     fitParameters: ParameterMap = ParameterMap.Empty)(implicit
     fitOperation: StreamFitOperation[Self, Training]): Unit = {
-    FlinkSolmaUtils.registerFlinkMLTypes(training.getExecutionEnvironment)
+    FlinkSolmaUtils.registerFlinkMLTypes(training.executionEnvironment)
     fitOperation.fit(this, fitParameters, training)
   }
 }
@@ -49,30 +48,28 @@ trait StreamEstimator[Self] extends WithParameters with Serializable {
 object StreamEstimator {
 
   implicit def fallbackFitOperation[
-      Self: TypeTag,
-      Training: TypeTag]
-    : StreamFitOperation[Self, Training] = {
+  Self: TypeTag,
+  Training: TypeTag]
+  : StreamFitOperation[Self, Training] = {
     new StreamFitOperation[Self, Training]{
-
       override def fit(
         instance: Self,
         fitParameters: ParameterMap,
-        input: DataSet[Training])
+        input: DataStream[Training])
       : Unit = {
         val self = typeOf[Self]
         val training = typeOf[Training]
 
         throw new RuntimeException("There is no StreamFitOperation defined for " + self +
-          " which trains on a DataSet[" + training + "]")
+          " which trains on a DataStream[" + training + "]")
       }
-
     }
   }
 
   implicit def fallbackTransformOperation[
-      Self: TypeTag,
-      IN: TypeTag]
-    : TransformDataStreamOperation[Self, IN, Any] = {
+  Self: TypeTag,
+  IN: TypeTag]
+  : TransformDataStreamOperation[Self, IN, Any] = {
     new TransformDataStreamOperation[Self, IN, Any] {
       override def transformDataStream(
         instance: Self,
@@ -90,15 +87,15 @@ object StreamEstimator {
   }
 
   implicit def fallbackPredictOperation[
-      Self: TypeTag,
-      Testing: TypeTag]
-    : PredictDataStreamOperation[Self, Testing, Any] = {
+  Self: TypeTag,
+  Testing: TypeTag]
+  : PredictDataStreamOperation[Self, Testing, Any] = {
     new PredictDataStreamOperation[Self, Testing, Any] {
       override def predictDataStream(
-          instance: Self,
-          predictParameters: ParameterMap,
-          input: DataStream[Testing])
-        : DataStream[Any] = {
+        instance: Self,
+        predictParameters: ParameterMap,
+        input: DataStream[Testing])
+      : DataStream[Any] = {
         val self = typeOf[Self]
         val testing = typeOf[Testing]
 
@@ -110,5 +107,5 @@ object StreamEstimator {
 }
 
 trait StreamFitOperation[Self, Training]{
-  def fit(instance: Self, fitParameters: ParameterMap, input: DataSet[Training]): Unit
+  def fit(instance: Self, fitParameters: ParameterMap, input: DataStream[Training]): Unit
 }

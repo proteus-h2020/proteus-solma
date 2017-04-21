@@ -2,11 +2,11 @@ package eu.proteus.solma.sax
 
 import java.lang.Iterable
 
-import eu.proteus.solma.pipeline.StreamFitOperation
 import org.apache.flink.api.common.functions.GroupReduceFunction
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.api.scala.createTypeInformation
 import org.apache.flink.ml.common.ParameterMap
+import org.apache.flink.ml.pipeline.FitOperation
 import org.apache.flink.util.Collector
 
 import scala.collection.JavaConversions
@@ -14,7 +14,7 @@ import scala.collection.JavaConversions
 /**
  * Fit operation for the SAX dictionary.
  */
-class SAXDictionaryFitOperation[T] extends StreamFitOperation[SAXDictionary, T]{
+class SAXDictionaryFitOperation[T] extends FitOperation[SAXDictionary, T]{
 
   override def fit(
     instance: SAXDictionary,

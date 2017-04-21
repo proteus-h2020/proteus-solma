@@ -27,7 +27,6 @@ import org.scalatest.Matchers
 import org.apache.flink.api.scala.createTypeInformation
 import eu.proteus.solma.sax.SAX.fitImplementation
 import eu.proteus.solma.sax.SAX.transformImplementation
-import org.scalactic.TolerantNumerics
 
 object SAXITSuite {
 
@@ -102,9 +101,7 @@ class SAXITSuite extends FunSuite with Matchers with FlinkTestBase{
     sax.printInternalParameters()
     val transformed = sax.transform(evalDataSet)
     val r : Iterator[String] = transformed.collect()
-    val job = streamingEnv.execute()
     val result = r.toList
-    println(s"Result: ${result.mkString(", ")}")
     val expected : Seq[String] = List("a", "b", "b", "a", "a")
     assert(result === expected, "Result should match")
   }
@@ -122,10 +119,7 @@ class SAXITSuite extends FunSuite with Matchers with FlinkTestBase{
     sax.printInternalParameters()
     val transformed = sax.transform(evalDataSet)
     val r : Iterator[String] = transformed.collect()
-    val job = streamingEnv.execute()
-    val exec = job.getJobExecutionResult
     val result = r.toList
-    println(s"Result: ${result.mkString(", ")}")
     val expected : Seq[String] = List("ab", "bb", "ba")
     assert(result === expected, "Result should match")
   }

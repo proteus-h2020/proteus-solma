@@ -16,14 +16,14 @@
 
 package eu.proteus.solma.sax
 
-import eu.proteus.solma.pipeline.StreamFitOperation
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.api.scala.createTypeInformation
 import org.apache.flink.ml.common.ParameterMap
+import org.apache.flink.ml.pipeline.FitOperation
 import org.apache.flink.util.Collector
 import org.slf4j.Logger
 
-object SAXStreamFitOperation{
+object SAXFitOperation{
 
   /**
    * Class logger.
@@ -35,9 +35,9 @@ object SAXStreamFitOperation{
 /**
  * Fit operation for the SAX.
  */
-class SAXStreamFitOperation[T] extends StreamFitOperation[SAX, T]{
+class SAXFitOperation[T] extends FitOperation[SAX, T]{
 
-  import eu.proteus.solma.sax.SAXStreamFitOperation.Log
+  import eu.proteus.solma.sax.SAXFitOperation.Log
 
   /**
    * Extract the dataset statistics including the average and standard deviation.
