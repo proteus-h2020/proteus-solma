@@ -81,16 +81,15 @@ object SimpleReservoirSampling {
         val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input)
         val k = resultingParameters(ReservoirSize)
         val gen = new XORShiftRandom()
-        implicit val typeInfo = TypeInformation.of(classOf[(Long, Int, Array[T])])
-        statefulStream.flatMapWithState((in, state: Option[(Long, Int, Array[T])]) => {
+        implicit val typeInfo = TypeInformation.of(classOf[(Long, Array[T])])
+        statefulStream.flatMapWithState((in, state: Option[(Long, Array[T])]) => {
           val (element, _) = in
           state match {
             case Some(curr) => {
-              var (streamCounter, reservoirCounter, reservoir) = curr
+              val (streamCounter, reservoir) = curr
               val data = new mutable.ListBuffer[T]()
-              if (reservoirCounter <= k) {
-                reservoir(reservoirCounter - 1) = element
-                reservoirCounter += 1
+              if (streamCounter < k) {
+                reservoir(streamCounter.toInt) = element
                 data += element
               } else {
                 val j = gen.nextInt(streamCounter.toInt + 1)
@@ -99,12 +98,12 @@ object SimpleReservoirSampling {
                   data += element
                 }
               }
-              (data, Some((streamCounter + 1, reservoirCounter, reservoir)))
+              (data, Some((streamCounter + 1, reservoir)))
             }
             case None => {
               val reservoir = Array.ofDim[T](k)
               reservoir(0) = element
-              (Seq(element), Some((1L, 1, reservoir)))
+              (Seq(element), Some((1L, reservoir)))
             }
           }
         })
