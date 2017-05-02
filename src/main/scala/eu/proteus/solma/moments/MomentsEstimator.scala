@@ -24,37 +24,62 @@ import eu.proteus.solma.pipeline.{StreamFitOperation, StreamTransformer, Transfo
 import eu.proteus.solma.utils.FlinkSolmaUtils
 import org.apache.flink.ml.math.Breeze._
 import org.apache.flink.ml.math.Vector
-import org.apache.flink.ml.common.ParameterMap
+import org.apache.flink.ml.common.{Parameter, ParameterMap}
 import eu.proteus.solma._
 import org.apache.flink.streaming.api.scala._
 import breeze.linalg.{Vector => BreezeVector}
+import eu.proteus.solma.events.StreamEvent
 
 import scala.collection.mutable
 
 @Proteus
 class MomentsEstimator extends StreamTransformer[MomentsEstimator] {
+  import MomentsEstimator._
+
+  def enableAggregation(enabled: Boolean): MomentsEstimator = {
+    parameters.add(AggregateMoments, enabled)
+    this
+  }
+
+  def setFeaturesCount(n: Int): MomentsEstimator = {
+    parameters.add(FeaturesCount, n)
+    this
+  }
 }
 
 object MomentsEstimator {
 
   // ====================================== Parameters =============================================
 
+  case object AggregateMoments extends Parameter[Boolean] {
+    override val defaultValue: Option[Boolean] = Some(false)
+  }
+
+  case object FeaturesCount extends Parameter[Int] {
+    override val defaultValue: Option[Int] = Some(1)
+  }
+
+
 
   // ====================================== Extra =============================================
 
   class Moments(
-    var counter: Long,
-    var currMean: BreezeVector[Double],
-    var M2: BreezeVector[Double]) {
+    private [moments] var counter: BreezeVector[Double],
+    private [moments] var currMean: BreezeVector[Double],
+    private [moments] var M2: BreezeVector[Double]) {
 
-    def this(x: BreezeVector[Double]) = this(1L, x.copy, BreezeVector.zeros[Double](x.size))
+    def this(x: BreezeVector[Double], slice: IndexedSeq[Int], n: Int) = {
+      this(BreezeVector.zeros[Double](n), BreezeVector.zeros[Double](n), BreezeVector.zeros[Double](n))
+      counter(slice) :+= 1.0
+      currMean(slice) :+= x
+    }
 
-    def process(x: BreezeVector[Double]): this.type = {
-      counter += 1L
-      val delta = x :- currMean
-      currMean :+= (delta :/ counter.toDouble)
-      val delta2 = x :- currMean
-      M2 :+= (delta :*= delta2)
+    def process(x: BreezeVector[Double], slice: IndexedSeq[Int]): this.type = {
+      counter(slice) :+= 1.0
+      val delta = x :- currMean(slice)
+      currMean(slice) :+= (delta :/ counter(slice))
+      val delta2 = x :- currMean(slice)
+      M2(slice) :+= (delta :*= delta2)
       this
     }
 
@@ -63,30 +88,30 @@ object MomentsEstimator {
     }
 
     def variance: BreezeVector[Double] = {
-      M2 :/ (counter.toDouble - 1)
+      M2 :/ (counter :- 1.0)
     }
 
     def merge(that: Moments): this.type = {
-      val cnt = counter.toDouble + that.counter.toDouble
+      val cnt = counter :+ that.counter
       val delta = that.currMean :- currMean
-      val m_a = variance :* (counter.toDouble - 1)
-      val m_b = that.variance :* (that.counter.toDouble - 1)
-      currMean :*= counter.toDouble
-      currMean :+= (that.currMean :* that.counter.toDouble)
+      val m_a = variance :* (counter :- 1.0)
+      val m_b = that.variance :* (that.counter :- 1.0)
+      currMean :*= counter
+      currMean :+= (that.currMean :* that.counter)
       currMean :/= cnt
       delta :^= 2.0
-      delta :*= (counter.toDouble * that.counter.toDouble / cnt)
+      delta :*= (counter :* that.counter :/ cnt)
       M2 := (m_a :+ m_b) :+= delta
-      counter += that.counter
+      counter :+= that.counter
       this
     }
 
     override def clone(): Moments = {
-      new Moments(counter, currMean.copy, M2.copy)
+      new Moments(counter.copy, currMean.copy, M2.copy)
     }
 
     override def toString: String = {
-      "[counter=" + counter + ",mean=" + mean.toString + ",variance=" + variance.toString + "]"
+      "[counter=" + counter.toString + ",mean=" + mean.toString + ",variance=" + variance.toString + "]"
     }
   }
 
@@ -108,28 +133,34 @@ object MomentsEstimator {
     }
   }
 
-  implicit def transformMomentsEstimators[T <: Vector] = {
-    new TransformDataStreamOperation[MomentsEstimator, T, Moments]{
+  implicit def transformMomentsEstimators[E <: StreamEvent[Vector]] = {
+    new TransformDataStreamOperation[MomentsEstimator, E, Moments]{
       override def transformDataStream(
         instance: MomentsEstimator,
         transformParameters: ParameterMap,
-        input: DataStream[T])
+        input: DataStream[E])
         : DataStream[Moments] = {
         val resultingParameters = instance.parameters ++ transformParameters
-        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input)
-        statefulStream.mapWithState((in, state: Option[Moments]) => {
-          val (element, pid) = in
-          val x = element.asBreeze
+        val featuresCount = resultingParameters(FeaturesCount)
+        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[E](input)
+
+        val intermediate = statefulStream.mapWithState((in, state: Option[Moments]) => {
+          val (event, pid) = in
+          val slice = event.slice
+          val x = event.data.asBreeze
           val metrics = state match {
             case Some(curr) => {
-              curr.process(x)
+              curr.process(x, slice)
             }
             case None => {
-              new Moments(x)
+              new Moments(x, slice, featuresCount)
             }
           }
           ((pid, metrics), Some(metrics))
-        }).fold(new mutable.HashMap[Int, Moments]())((acc: mutable.HashMap[Int, Moments], in) => {
+        })
+
+        if (resultingParameters(AggregateMoments)) {
+          intermediate.fold(new mutable.HashMap[Int, Moments]())((acc: mutable.HashMap[Int, Moments], in) => {
             val (pid, moments) = in
             acc(pid) = moments
             acc.remove(-1)
@@ -142,6 +173,12 @@ object MomentsEstimator {
             acc
           }
         ).map(data => data(-1))
+        } else {
+          intermediate.map(e => {
+            e._2
+          })
+        }
+
       }
     }
   }

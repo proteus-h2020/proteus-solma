@@ -25,7 +25,7 @@ import org.apache.flink.streaming.api.scala._
 
 import scala.reflect.ClassTag
 
-trait StreamTransformer[Self] extends StreamEstimator[Self] {
+trait StreamTransformer[Self <: StreamTransformer[Self]] extends StreamEstimator[Self] {
   that: Self =>
 
   def transform[Input, Output](
@@ -35,6 +35,26 @@ trait StreamTransformer[Self] extends StreamEstimator[Self] {
     : DataStream[Output] = {
     FlinkSolmaUtils.registerFlinkMLTypes(input.executionEnvironment)
     transformOperation.transformDataStream(that, transformParameters, input)
+  }
+
+  /** Chains two [[StreamTransformer]] to form a [[ChainedStreamTransformer]].
+    *
+    * @param transformer Right side transformer of the resulting pipeline
+    * @tparam T Type of the [[StreamTransformer]]
+    * @return
+    */
+  def chainTransformer[T <: StreamTransformer[T]](transformer: T): ChainedStreamTransformer[Self, T] = {
+    new ChainedStreamTransformer(this, transformer)
+  }
+
+  /** Chains a [[StreamPredictor]] with a [[StreamPredictor]] to form a [[ChainedStreamPredictor]].
+    *
+    * @param predictor Trailing [[StreamPredictor]] of the resulting pipeline
+    * @tparam P Type of the [[StreamPredictor]]
+    * @return
+    */
+  def chainPredictor[P <: StreamPredictor[P]](predictor: P): ChainedStreamPredictor[Self, P] = {
+    ChainedStreamPredictor(this, predictor)
   }
 
 }
