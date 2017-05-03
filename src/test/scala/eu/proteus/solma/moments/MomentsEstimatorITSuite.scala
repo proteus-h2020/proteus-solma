@@ -61,7 +61,7 @@ class MomentsEstimatorITSuite
 
     val it: scala.Iterator[Moments] = estimator.transform(stream).collect()
 
-    val eps = 1e06
+    val eps = 1E-5
     while (it.hasNext) {
       val elem = it.next
       if (elem.counter(0) == 47.0) {
@@ -90,21 +90,23 @@ class MomentsEstimatorITSuite
     val stream = env.fromCollection(data2)
 
     val estimator = MomentsEstimator()
-      .setFeaturesCount(2)
+      .setFeaturesCount(3)
       .enableAggregation(true)
 
     val it: scala.Iterator[Moments] = estimator.transform(stream).collect()
 
-    val eps = 1e06
+    val eps = 1E-5
     while (it.hasNext) {
       val elem = it.next
       if (elem.counter(0) == 47.0) {
         elem.mean(0) should be (result(0).mean +- eps)
         elem.mean(1) should be (result(1).mean +- eps)
-//        elem.mean(2) should be (result(2).mean +- eps)
+        elem.mean(2) should be (result(2).mean +- eps)
         elem.variance(0) should be (result(0).variance +- eps)
         elem.variance(1) should be (result(1).variance +- eps)
-//        elem.variance(2) should be (result(2).variance +- eps)
+        if (!java.lang.Double.isNaN(elem.variance(2))) {
+          elem.variance(2) should be (result(2).variance +- eps)
+        }
       }
     }
   }
@@ -209,6 +211,24 @@ object MomentsEstimatorITSuite {
     StreamEvent(0 to 1, DenseVector(Array(1200.00, 3.00))),
     StreamEvent(0 to 1, DenseVector(Array(852.00, 2.00))),
     StreamEvent(0 to 1, DenseVector(Array(1852.00, 4.00))),
-    StreamEvent(0 to 1, DenseVector(Array(1203.00, 3.00)))
+    StreamEvent(0 to 1, DenseVector(Array(1203.00, 3.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00))),
+    StreamEvent(2 to 2, DenseVector(Array(0.00)))
   )
 }
