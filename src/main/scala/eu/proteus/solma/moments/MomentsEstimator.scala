@@ -32,15 +32,34 @@ import eu.proteus.solma.events.StreamEvent
 
 import scala.collection.mutable
 
+/**
+  * A simple stream transformer that ingests a stream of samples and outputs
+  * simple mean and variance of the input stream. It requires to know the
+  * total number of features in advance, but it can work with features
+  * coming at different "speed", i.e., asynchronously.
+  * The output is the stream of the parallel moments, outputted as soon as
+  * an instance is updated. Optionally, the output may be an aggregation
+  * of all the parallel moments (with loss of parallelism).
+  */
 @Proteus
 class MomentsEstimator extends StreamTransformer[MomentsEstimator] {
   import MomentsEstimator._
 
+  /**
+    * Enable the aggregation of all the parallel moments, which
+    * will be sent downstream to the next operation.
+    * @param enabled
+    */
   def enableAggregation(enabled: Boolean): MomentsEstimator = {
     parameters.add(AggregateMoments, enabled)
     this
   }
 
+  /**
+    * The total number of features on which the mean and the variance
+    * are calculated.
+    * @param n
+    */
   def setFeaturesCount(n: Int): MomentsEstimator = {
     parameters.add(FeaturesCount, n)
     this

@@ -16,20 +16,21 @@
  * limitations under the License.
  */
 
-
 package eu.proteus.solma.events
 
 import org.apache.flink.ml.math.Vector
 
-class StreamEvent[T <: Vector](
-  val slice: IndexedSeq[Int],
-  val data: T
+/**
+  * This is the base class for modeling the stream events
+  * describing ingested samples. Each sample contains a subset
+  * of the features on which a ML model is trained.
+  * @param slice the indexes of the features that describe the sample
+  * @param data the features that describe the sample
+  * @tparam T a sparse or dense vector
+  */
+case class StreamEvent[T <: Vector](
+  slice: IndexedSeq[Int],
+  data: T
 ){
-
-}
-
-object StreamEvent {
-
-  def apply[T <: Vector](slice: IndexedSeq[Int], data: T): StreamEvent[T] = new StreamEvent[T](slice, data)
 
 }
