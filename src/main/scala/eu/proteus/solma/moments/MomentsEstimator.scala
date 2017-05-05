@@ -101,10 +101,10 @@ object MomentsEstimator {
   implicit def fitNoOp[T] = {
     new StreamFitOperation[MomentsEstimator, T]{
       override def fit(
-        instance: MomentsEstimator,
-        fitParameters: ParameterMap,
-        input: DataStream[T])
-      : Unit = {}
+          instance: MomentsEstimator,
+          fitParameters: ParameterMap,
+          input: DataStream[T])
+        : Unit = {}
     }
   }
 
@@ -114,7 +114,7 @@ object MomentsEstimator {
         instance: MomentsEstimator,
         transformParameters: ParameterMap,
         input: DataStream[T])
-      : DataStream[Moments] = {
+        : DataStream[Moments] = {
         val resultingParameters = instance.parameters ++ transformParameters
         val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input)
         statefulStream.mapWithState((in, state: Option[Moments]) => {
@@ -130,17 +130,17 @@ object MomentsEstimator {
           }
           ((pid, metrics), Some(metrics))
         }).fold(new mutable.HashMap[Int, Moments]())((acc: mutable.HashMap[Int, Moments], in) => {
-          val (pid, moments) = in
-          acc(pid) = moments
-          acc.remove(-1)
-          val it = acc.values.iterator
-          val ret = it.next.clone()
-          while (it.hasNext) {
-            ret.merge(it.next)
+            val (pid, moments) = in
+            acc(pid) = moments
+            acc.remove(-1)
+            val it = acc.values.iterator
+            val ret = it.next.clone()
+            while (it.hasNext) {
+              ret.merge(it.next)
+            }
+            acc(-1) = ret
+            acc
           }
-          acc(-1) = ret
-          acc
-        }
         ).map(data => data(-1))
       }
     }

@@ -27,10 +27,10 @@ trait StreamPredictor[Self] extends StreamEstimator[Self] {
   that: Self =>
 
   def predict[Testing, Prediction](
-    testing: DataStream[Testing],
-    predictParameters: ParameterMap = ParameterMap.Empty)(implicit
-    predictor: PredictDataStreamOperation[Self, Testing, Prediction])
-  : DataStream[Prediction] = {
+      testing: DataStream[Testing],
+      predictParameters: ParameterMap = ParameterMap.Empty)(implicit
+      predictor: PredictDataStreamOperation[Self, Testing, Prediction])
+    : DataStream[Prediction] = {
     FlinkSolmaUtils.registerFlinkMLTypes(testing.getExecutionEnvironment)
     predictor.predictDataStream(this, predictParameters, testing)
   }
@@ -39,20 +39,20 @@ trait StreamPredictor[Self] extends StreamEstimator[Self] {
 
 object StreamPredictor {
   implicit def defaultPredictDataStreamOperation[
-  Instance <: StreamEstimator[Instance],
-  Model,
-  Testing,
-  PredictionValue](
-    implicit predictOperation: StreamPredictOperation[Instance, Model, Testing, PredictionValue],
-    testingTypeInformation: TypeInformation[Testing],
-    predictionValueTypeInformation: TypeInformation[PredictionValue])
-  : PredictDataStreamOperation[Instance, Testing, (Testing, PredictionValue)] = {
+      Instance <: StreamEstimator[Instance],
+      Model,
+      Testing,
+      PredictionValue](
+      implicit predictOperation: StreamPredictOperation[Instance, Model, Testing, PredictionValue],
+      testingTypeInformation: TypeInformation[Testing],
+      predictionValueTypeInformation: TypeInformation[PredictionValue])
+    : PredictDataStreamOperation[Instance, Testing, (Testing, PredictionValue)] = {
     new PredictDataStreamOperation[Instance, Testing, (Testing, PredictionValue)] {
       override def predictDataStream(
-        instance: Instance,
-        predictParameters: ParameterMap,
-        input: DataStream[Testing])
-      : DataStream[(Testing, PredictionValue)] = {
+          instance: Instance,
+          predictParameters: ParameterMap,
+          input: DataStream[Testing])
+        : DataStream[(Testing, PredictionValue)] = {
         val resultingParameters = instance.parameters ++ predictParameters
         val model = predictOperation.getModel(instance, resultingParameters)
         implicit val resultTypeInformation = createTypeInformation[(Testing, PredictionValue)]
@@ -67,35 +67,35 @@ object StreamPredictor {
 trait PredictDataStreamOperation[Self, Testing, Prediction] extends Serializable{
 
   /** Calculates the predictions for all elements in the [[DataStream]] input
-   *
-   * @param instance The Predictor instance that we will use to make the predictions
-   * @param predictParameters The parameters for the prediction
-   * @param input The DataSet containing the unlabeled examples
-   * @return
-   */
+    *
+    * @param instance The Predictor instance that we will use to make the predictions
+    * @param predictParameters The parameters for the prediction
+    * @param input The DataSet containing the unlabeled examples
+    * @return
+    */
   def predictDataStream(
-    instance: Self,
-    predictParameters: ParameterMap,
-    input: DataStream[Testing])
-  : DataStream[Prediction]
+      instance: Self,
+      predictParameters: ParameterMap,
+      input: DataStream[Testing])
+    : DataStream[Prediction]
 }
 
 trait StreamPredictOperation[Instance, Model, Testing, Prediction] extends Serializable{
 
   /** Defines how to retrieve the model of the type for which this operation was defined
-   *
-   * @param instance The Predictor instance that we will use to make the predictions
-   * @param predictParameters The parameters for the prediction
-   * @return A DataSet with the model representation as its only element
-   */
+    *
+    * @param instance The Predictor instance that we will use to make the predictions
+    * @param predictParameters The parameters for the prediction
+    * @return A DataSet with the model representation as its only element
+    */
   def getModel(instance: Instance, predictParameters: ParameterMap): Model
 
   /** Calculates the prediction for a single element given the model of the [[StreamPredictor]].
-   *
-   * @param value The unlabeled example on which we make the prediction
-   * @param model The model representation of the prediciton algorithm
-   * @return A label for the provided example of type [[Prediction]]
-   */
+    *
+    * @param value The unlabeled example on which we make the prediction
+    * @param model The model representation of the prediciton algorithm
+    * @return A label for the provided example of type [[Prediction]]
+    */
   def predict(value: Testing, model: Model):
-  Prediction
+    Prediction
 }

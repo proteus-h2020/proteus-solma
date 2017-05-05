@@ -89,10 +89,10 @@ object FrequentDirections {
   implicit def fitNoOp[T] = {
     new StreamFitOperation[FrequentDirections, T]{
       override def fit(
-        instance: FrequentDirections,
-        fitParameters: ParameterMap,
-        input: DataStream[T])
-      : Unit = {}
+          instance: FrequentDirections,
+          fitParameters: ParameterMap,
+          input: DataStream[T])
+        : Unit = {}
     }
   }
 
@@ -101,9 +101,9 @@ object FrequentDirections {
   implicit def treansformFrequentDirections[T <: Vector : TypeInformation : ClassTag] = {
     new TransformDataStreamOperation[FrequentDirections, T, T] {
       override def transformDataStream(
-        instance: FrequentDirections,
-        transformParameters: ParameterMap,
-        input: DataStream[T])
+          instance: FrequentDirections,
+          transformParameters: ParameterMap,
+          input: DataStream[T])
       : DataStream[T] = {
         val resultingParameters = instance.parameters ++ transformParameters
         val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input)
@@ -136,9 +136,9 @@ object FrequentDirections {
   }
 
   private [solma] def updateSketch(
-    elem: BreezeVector[Double],
-    state: Option[Sketch],
-    out: mutable.Buffer[BreezeVector[Double]] = null
+      elem: BreezeVector[Double],
+      state: Option[Sketch],
+      out: mutable.Buffer[BreezeVector[Double]] = null
   ): Sketch = {
     state match {
       case Some(Sketch(zeroRows, matrix)) => {

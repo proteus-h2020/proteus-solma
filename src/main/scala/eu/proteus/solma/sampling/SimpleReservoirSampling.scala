@@ -63,10 +63,10 @@ object SimpleReservoirSampling {
   implicit def fitNoOp[T] = {
     new StreamFitOperation[SimpleReservoirSampling, T]{
       override def fit(
-        instance: SimpleReservoirSampling,
-        fitParameters: ParameterMap,
-        input: DataStream[T])
-      : Unit = {}
+          instance: SimpleReservoirSampling,
+          fitParameters: ParameterMap,
+          input: DataStream[T])
+        : Unit = {}
     }
   }
 
@@ -76,7 +76,7 @@ object SimpleReservoirSampling {
         instance: SimpleReservoirSampling,
         transformParameters: ParameterMap,
         input: DataStream[T])
-      : DataStream[T] = {
+        : DataStream[T] = {
         val resultingParameters = instance.parameters ++ transformParameters
         val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input)
         val k = resultingParameters(ReservoirSize)

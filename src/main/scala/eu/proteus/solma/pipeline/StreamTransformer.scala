@@ -29,10 +29,10 @@ trait StreamTransformer[Self] extends StreamEstimator[Self] {
   that: Self =>
 
   def transform[Input, Output](
-    input: DataStream[Input],
-    transformParameters: ParameterMap = ParameterMap.Empty)
-    (implicit transformOperation: TransformDataStreamOperation[Self, Input, Output])
-  : DataStream[Output] = {
+      input: DataStream[Input],
+      transformParameters: ParameterMap = ParameterMap.Empty)
+      (implicit transformOperation: TransformDataStreamOperation[Self, Input, Output])
+    : DataStream[Output] = {
     FlinkSolmaUtils.registerFlinkMLTypes(input.executionEnvironment)
     transformOperation.transformDataStream(that, transformParameters, input)
   }
@@ -41,20 +41,20 @@ trait StreamTransformer[Self] extends StreamEstimator[Self] {
 
 object StreamTransformer {
   implicit def defaultTransformDataSetOperation[
-  Instance <: StreamEstimator[Instance],
-  Model,
-  Input,
-  Output](
-    implicit transformOperation: StreamTransformOperation[Instance, Model, Input, Output],
-    outputTypeInformation: TypeInformation[Output],
-    outputClassTag: ClassTag[Output])
-  : TransformDataStreamOperation[Instance, Input, Output] = {
+      Instance <: StreamEstimator[Instance],
+      Model,
+      Input,
+      Output](
+      implicit transformOperation: StreamTransformOperation[Instance, Model, Input, Output],
+      outputTypeInformation: TypeInformation[Output],
+      outputClassTag: ClassTag[Output])
+    : TransformDataStreamOperation[Instance, Input, Output] = {
     new TransformDataStreamOperation[Instance, Input, Output] {
       override def transformDataStream(
-        instance: Instance,
-        transformParameters: ParameterMap,
-        input: DataStream[Input])
-      : DataStream[Output] = {
+          instance: Instance,
+          transformParameters: ParameterMap,
+          input: DataStream[Input])
+        : DataStream[Output] = {
         val resultingParameters = instance.parameters ++ transformParameters
         val model = transformOperation.getModel(instance, resultingParameters)
 
@@ -68,28 +68,28 @@ object StreamTransformer {
 
 trait TransformDataStreamOperation[Instance, Input, Output] extends Serializable {
   def transformDataStream(
-    instance: Instance,
-    transformParameters: ParameterMap,
-    input: DataStream[Input])
-  : DataStream[Output]
+      instance: Instance,
+      transformParameters: ParameterMap,
+      input: DataStream[Input])
+    : DataStream[Output]
 }
 
 trait StreamTransformOperation[Instance, Model, Input, Output] extends Serializable {
 
   /** Retrieves the model of the [[StreamTransformer]] for which this operation has been defined.
-   *
-   * @param instance
-   * @param transformParemters
-   * @return
-   */
+    *
+    * @param instance
+    * @param transformParemters
+    * @return
+    */
   def getModel(instance: Instance, transformParemters: ParameterMap): Model
 
   /** Transforms a single element with respect to the model associated with the respective
-   * [[StreamTransformer]]
-   *
-   * @param element
-   * @param model
-   * @return
-   */
+    * [[StreamTransformer]]
+    *
+    * @param element
+    * @param model
+    * @return
+    */
   def transform(element: Input, model: Model): Output
 }
