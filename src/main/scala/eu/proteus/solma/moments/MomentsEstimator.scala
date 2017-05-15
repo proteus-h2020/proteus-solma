@@ -152,7 +152,7 @@ object MomentsEstimator {
     }
   }
 
-  implicit def transformMomentsEstimators[E <: StreamEvent[Vector]] = {
+  implicit def transformMomentsEstimators[E <: StreamEvent] = {
     new TransformDataStreamOperation[MomentsEstimator, E, Moments]{
       override def transformDataStream(
         instance: MomentsEstimator,

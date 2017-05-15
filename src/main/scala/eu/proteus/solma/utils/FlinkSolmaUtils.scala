@@ -52,10 +52,7 @@ object FlinkSolmaUtils {
     env.registerType(breeze.linalg.CSCMatrix.zeros[Double](0, 0).getClass)
 
     // Solma Stream events
-    env.registerType(classOf[eu.proteus.solma.events.StreamEvent[org.apache.flink.ml.math.DenseVector]])
-    env.registerType(classOf[eu.proteus.solma.events.StreamEvent[org.apache.flink.ml.math.SparseVector]])
-    env.registerType(classOf[eu.proteus.solma.events.StreamEvent[org.apache.flink.ml.math.DenseMatrix]])
-    env.registerType(classOf[eu.proteus.solma.events.StreamEvent[org.apache.flink.ml.math.SparseMatrix]])
+    env.registerType(classOf[eu.proteus.solma.events.StreamEvent])
 
   }
 

@@ -21,16 +21,14 @@ package eu.proteus.solma.events
 import org.apache.flink.ml.math.Vector
 
 /**
-  * This is the base class for modeling the stream events
+  * This is the base trait for modeling the stream events
   * describing ingested samples. Each sample contains a subset
   * of the features on which a ML model is trained.
-  * @param slice the indexes of the features that describe the sample
-  * @param data the features that describe the sample
-  * @tparam T a sparse or dense vector
+  * slice the indexes of the features that describe the sample
+  * data the features that describe the sample
   */
-case class StreamEvent[T <: Vector](
-  slice: IndexedSeq[Int],
-  data: T
-){
-
+trait StreamEvent extends Serializable
+{
+  def slice: IndexedSeq[Int]
+  def data: Vector
 }
