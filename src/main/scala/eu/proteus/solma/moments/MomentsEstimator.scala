@@ -23,12 +23,12 @@ import eu.proteus.annotations.Proteus
 import eu.proteus.solma.pipeline.{StreamFitOperation, StreamTransformer, TransformDataStreamOperation}
 import eu.proteus.solma.utils.FlinkSolmaUtils
 import org.apache.flink.ml.math.Breeze._
-import org.apache.flink.ml.math.Vector
 import org.apache.flink.ml.common.{Parameter, ParameterMap}
 import eu.proteus.solma._
 import org.apache.flink.streaming.api.scala._
 import breeze.linalg.{Vector => BreezeVector}
 import eu.proteus.solma.events.StreamEvent
+import eu.proteus.solma.pipeline.StreamEstimator.PartitioningOperation
 
 import scala.collection.mutable
 
@@ -83,23 +83,27 @@ object MomentsEstimator {
   // ====================================== Extra =============================================
 
   class Moments(
-    private [moments] var counter: BreezeVector[Double],
-    private [moments] var currMean: BreezeVector[Double],
-    private [moments] var M2: BreezeVector[Double]) {
+     private [moments] var counters: BreezeVector[Double],
+     private [moments] var currMean: BreezeVector[Double],
+     private [moments] var M2: BreezeVector[Double]) {
 
     def this(x: BreezeVector[Double], slice: IndexedSeq[Int], n: Int) = {
       this(BreezeVector.zeros[Double](n), BreezeVector.zeros[Double](n), BreezeVector.zeros[Double](n))
-      counter(slice) :+= 1.0
+      counters(slice) :+= 1.0
       currMean(slice) :+= x
     }
 
     def process(x: BreezeVector[Double], slice: IndexedSeq[Int]): this.type = {
-      counter(slice) :+= 1.0
+      counters(slice) :+= 1.0
       val delta = x :- currMean(slice)
-      currMean(slice) :+= (delta :/ counter(slice))
+      currMean(slice) :+= (delta :/ counters(slice))
       val delta2 = x :- currMean(slice)
       M2(slice) :+= (delta :*= delta2)
       this
+    }
+
+    def counter(id: Int): Double = {
+      counters(id)
     }
 
     def mean: BreezeVector[Double] = {
@@ -107,30 +111,30 @@ object MomentsEstimator {
     }
 
     def variance: BreezeVector[Double] = {
-      M2 :/ (counter :- 1.0)
+      M2 :/ (counters :- 1.0)
     }
 
     def merge(that: Moments): this.type = {
-      val cnt = counter :+ that.counter
+      val cnt = counters :+ that.counters
       val delta = that.currMean :- currMean
-      val m_a = variance :* (counter :- 1.0)
-      val m_b = that.variance :* (that.counter :- 1.0)
-      currMean :*= counter
-      currMean :+= (that.currMean :* that.counter)
+      val m_a = variance :* (counters :- 1.0)
+      val m_b = that.variance :* (that.counters :- 1.0)
+      currMean :*= counters
+      currMean :+= (that.currMean :* that.counters)
       currMean :/= cnt
       delta :^= 2.0
-      delta :*= (counter :* that.counter :/ cnt)
+      delta :*= (counters :* that.counters :/ cnt)
       M2 := (m_a :+ m_b) :+= delta
-      counter :+= that.counter
+      counters :+= that.counters
       this
     }
 
     override def clone(): Moments = {
-      new Moments(counter.copy, currMean.copy, M2.copy)
+      new Moments(counters.copy, currMean.copy, M2.copy)
     }
 
     override def toString: String = {
-      "[counter=" + counter.toString + ",mean=" + mean.toString + ",variance=" + variance.toString + "]"
+      "[counter=" + counters.toString + ",mean=" + mean.toString + ",variance=" + variance.toString + "]"
     }
   }
 
@@ -153,15 +157,15 @@ object MomentsEstimator {
   }
 
   implicit def transformMomentsEstimators[E <: StreamEvent] = {
-    new TransformDataStreamOperation[MomentsEstimator, E, Moments]{
+    new TransformDataStreamOperation[MomentsEstimator, E, (Int, Moments)]{
       override def transformDataStream(
         instance: MomentsEstimator,
         transformParameters: ParameterMap,
         input: DataStream[E])
-        : DataStream[Moments] = {
+        : DataStream[(Int, Moments)] = {
         val resultingParameters = instance.parameters ++ transformParameters
         val featuresCount = resultingParameters(FeaturesCount)
-        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[E](input)
+        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[E](input, resultingParameters.get(PartitioningOperation))
 
         val intermediate = statefulStream.mapWithState((in, state: Option[Moments]) => {
           val (event, pid) = in
@@ -191,13 +195,10 @@ object MomentsEstimator {
             acc(-1) = ret
             acc
           }
-        ).map(data => data(-1))
+        ).map(data => (0, data(-1)))
         } else {
-          intermediate.map(e => {
-            e._2
-          })
+          intermediate
         }
-
       }
     }
   }
