@@ -19,13 +19,19 @@
 package eu.proteus.solma.pipeline
 
 import eu.proteus.solma.utils.FlinkSolmaUtils
-import org.apache.flink.ml.common.{ParameterMap, WithParameters}
+import org.apache.flink.ml.common.{Parameter, ParameterMap, WithParameters}
 import org.apache.flink.streaming.api.scala._
 
 import scala.reflect.runtime.universe._
 
 trait StreamEstimator[Self] extends WithParameters with Serializable {
+
   that: Self =>
+
+  def setPartitioning[Training](fun: (DataStream[Any]) => KeyedStream[(Any, Int), Int]): Self = {
+    parameters.add(StreamEstimator.PartitioningOperation, fun)
+    this
+  }
 
   /** Fits the estimator to the given input data. The fitting logic is contained in the
     * [[StreamFitOperation]]. The computed state will be stored in the implementing class.
@@ -46,6 +52,10 @@ trait StreamEstimator[Self] extends WithParameters with Serializable {
 }
 
 object StreamEstimator {
+
+  case object PartitioningOperation extends Parameter[(DataStream[Any]) => KeyedStream[(Any, Int), Int]] {
+    override val defaultValue: Option[(DataStream[_]) => KeyedStream[(Any, Int), Int]] = None
+  }
 
   implicit def fallbackFitOperation[
       Self: TypeTag,

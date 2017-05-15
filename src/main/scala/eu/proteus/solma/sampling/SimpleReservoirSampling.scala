@@ -23,6 +23,7 @@ import org.apache.flink.ml.common.{Parameter, ParameterMap}
 import org.apache.flink.ml.math.Vector
 import SimpleReservoirSampling.ReservoirSize
 import eu.proteus.annotations.Proteus
+import eu.proteus.solma.pipeline.StreamEstimator.PartitioningOperation
 import eu.proteus.solma.pipeline.{StreamFitOperation, StreamTransformer, TransformDataStreamOperation}
 import eu.proteus.solma.utils.FlinkSolmaUtils
 import org.apache.flink.streaming.api.scala.DataStream
@@ -78,7 +79,7 @@ object SimpleReservoirSampling {
         input: DataStream[T])
         : DataStream[T] = {
         val resultingParameters = instance.parameters ++ transformParameters
-        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input)
+        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input, resultingParameters.get(PartitioningOperation))
         val k = resultingParameters(ReservoirSize)
         val gen = new XORShiftRandom()
         implicit val typeInfo = TypeInformation.of(classOf[(Long, Array[T])])

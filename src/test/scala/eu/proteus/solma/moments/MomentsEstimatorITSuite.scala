@@ -59,12 +59,12 @@ class MomentsEstimatorITSuite
       .setFeaturesCount(3)
       .enableAggregation(true)
 
-    val it: scala.Iterator[Moments] = estimator.transform(stream).collect()
+    val it: scala.Iterator[Moments] = estimator.transform(stream).map(x=>x._2).collect()
 
     val eps = 1E-5
     while (it.hasNext) {
       val elem = it.next
-      if (elem.counter(0) == 47.0) {
+      if (elem.counters(0) == 47.0) {
         elem.mean(0) should be (result(0).mean +- eps)
         elem.mean(1) should be (result(1).mean +- eps)
         elem.mean(2) should be (result(2).mean +- eps)
@@ -93,12 +93,12 @@ class MomentsEstimatorITSuite
       .setFeaturesCount(3)
       .enableAggregation(true)
 
-    val it: scala.Iterator[Moments] = estimator.transform(stream).collect()
+    val it: scala.Iterator[Moments] = estimator.transform(stream).map(x=>x._2).collect()
 
     val eps = 1E-5
     while (it.hasNext) {
       val elem = it.next
-      if (elem.counter(0) == 47.0) {
+      if (elem.counters(0) == 47.0) {
         elem.mean(0) should be (result(0).mean +- eps)
         elem.mean(1) should be (result(1).mean +- eps)
         elem.mean(2) should be (result(2).mean +- eps)
