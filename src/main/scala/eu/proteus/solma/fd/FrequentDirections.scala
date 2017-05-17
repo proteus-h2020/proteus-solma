@@ -30,6 +30,7 @@ import org.apache.flink.streaming.api.scala._
 import eu.proteus.solma._
 import breeze.linalg.svd.{SVD => BreezeSVD}
 import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, Vector => BreezeVector}
+import eu.proteus.solma.pipeline.StreamEstimator.PartitioningOperation
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -106,7 +107,7 @@ object FrequentDirections {
           input: DataStream[T])
       : DataStream[T] = {
         val resultingParameters = instance.parameters ++ transformParameters
-        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input)
+        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input, resultingParameters.get(PartitioningOperation))
         ell = resultingParameters(SketchSize)
         d = resultingParameters(FeaturesNumber)
         assert(ell < d * 2, "the sketch size should be smaller than twice the number of features")

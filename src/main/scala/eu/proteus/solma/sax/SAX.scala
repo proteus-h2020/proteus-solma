@@ -19,6 +19,8 @@ package eu.proteus.solma.sax
 import eu.proteus.solma.pipeline.StreamTransformer
 import org.apache.flink.ml.common.Parameter
 import org.apache.flink.ml.pipeline.Estimator
+import org.apache.flink.streaming.api.scala.DataStream
+import org.apache.flink.streaming.api.scala.KeyedStream
 import org.slf4j.Logger
 
 /**
@@ -72,10 +74,45 @@ object SAX {
     override val defaultValue: Option[Int] = Some(AlphabetSize.DefaultAlphabetSize)
   }
 
+  /**
+   * Case object that defines the size of the window for the PAA aggregation.
+   */
   case object PAAFragmentSize extends Parameter[Int] {
+
+    /**
+     * Default fragment size.
+     */
     private val DefaultFragmentSize : Int = 2
 
+    /**
+     * Default value.
+     */
     override val defaultValue: Option[Int] = Some(PAAFragmentSize.DefaultFragmentSize)
+  }
+
+  /**
+   * Case object to the define the partitioning operation.
+   */
+  case object PartitioningOperation extends
+    Parameter[(DataStream[Any]) => KeyedStream[(Any, Int), Int]] {
+
+    /**
+     * Default value.
+     */
+    override val defaultValue: Option[(DataStream[_]) => KeyedStream[(Any, Int), Int]] = Some(singleKeyPartitioning)
+
+    /**
+     * As the SAX algorithm transforms an input stream into a word stream, the semantics of the
+     * underlying partitioning need to match those of the use case. A single stream with domain
+     * semantics must be associated with a single partition as to not produce words that contain
+     * symbols from different partitions.
+     *
+     * @param input The input data stream.
+     * @return A KeyedStream with zero as the key.
+     */
+    def singleKeyPartitioning(input: DataStream[_]) : KeyedStream[(Any, Int), Int] = {
+      input.map(x => (x, 0)).keyBy(t => t._2)
+    }
   }
 
   implicit def fitImplementation[T] = {
@@ -159,10 +196,28 @@ class SAX extends StreamTransformer[SAX] with Estimator[SAX]{
     this.parameters.get(SAX.AlphabetSize).get
   }
 
+  /**
+   * Define the partitioning function to be used for the SAX transformation. Notice that the
+   * selected policy must match the semantics of the use case.
+   *
+   * @param f The partitioning function.
+   */
+  def usePartitioningFunction(f: (DataStream[_]) => KeyedStream[(Any, Int), Int]) : Unit = {
+    this.parameters.add(SAX.PartitioningOperation, f)
+  }
+
+  /**
+   * Get the cuts associated with the current alphabet size.
+   * @return An array with the distribution cuts.
+   */
   private[sax] def getAlphabetCuts() : Array[Double] = {
     Cuts.breakpoints(this.getAlphabetSize())
   }
 
+  /**
+   * Get the fitted parameters.
+   * @return A tuple with the training average and training standard deviation.
+   */
   def getFittedParameters() : Option[(Double, Double)] = {
     if(this.trainingAvg.isDefined && this.trainingStd.isDefined){
       Some((this.trainingAvg.get, this.trainingStd.get))
@@ -172,13 +227,24 @@ class SAX extends StreamTransformer[SAX] with Estimator[SAX]{
   }
 
   /**
+   * Load the internal parameters required by the SAX transformation. Use this method to avoid
+   * training the same dataset multiple times.
+   *
+   * @param average The average of the values.
+   * @param standardDeviation The standard deviation of the values.
+   */
+  def loadParameters(average: Double, standardDeviation: Double) : Unit = {
+    this.trainingAvg = Some(average)
+    this.trainingStd = Some(standardDeviation)
+  }
+
+  /**
    * Print the internal parameters to the logger output.
    */
   def printInternalParameters() : Unit = {
     Log.info("Word size: " + this.parameters.get(SAX.WordSize))
     Log.info("Alphabet size: " + this.parameters.get(SAX.AlphabetSize))
     Log.info("PAA fragment size: " + this.parameters.get(SAX.PAAFragmentSize))
-
     Log.info("Training Avg: " + this.trainingAvg)
     Log.info("Training Std: " + this.trainingStd)
   }

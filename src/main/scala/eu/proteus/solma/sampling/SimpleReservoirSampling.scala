@@ -23,6 +23,7 @@ import org.apache.flink.ml.common.{Parameter, ParameterMap}
 import org.apache.flink.ml.math.Vector
 import SimpleReservoirSampling.ReservoirSize
 import eu.proteus.annotations.Proteus
+import eu.proteus.solma.pipeline.StreamEstimator.PartitioningOperation
 import eu.proteus.solma.pipeline.{StreamFitOperation, StreamTransformer, TransformDataStreamOperation}
 import eu.proteus.solma.utils.FlinkSolmaUtils
 import org.apache.flink.streaming.api.scala.DataStream
@@ -78,19 +79,18 @@ object SimpleReservoirSampling {
         input: DataStream[T])
         : DataStream[T] = {
         val resultingParameters = instance.parameters ++ transformParameters
-        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input)
+        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input, resultingParameters.get(PartitioningOperation))
         val k = resultingParameters(ReservoirSize)
         val gen = new XORShiftRandom()
-        implicit val typeInfo = TypeInformation.of(classOf[(Long, Int, Array[T])])
-        statefulStream.flatMapWithState((in, state: Option[(Long, Int, Array[T])]) => {
+        implicit val typeInfo = TypeInformation.of(classOf[(Long, Array[T])])
+        statefulStream.flatMapWithState((in, state: Option[(Long, Array[T])]) => {
           val (element, _) = in
           state match {
             case Some(curr) => {
-              var (streamCounter, reservoirCounter, reservoir) = curr
+              val (streamCounter, reservoir) = curr
               val data = new mutable.ListBuffer[T]()
-              if (reservoirCounter <= k) {
-                reservoir(reservoirCounter - 1) = element
-                reservoirCounter += 1
+              if (streamCounter < k) {
+                reservoir(streamCounter.toInt) = element
                 data += element
               } else {
                 val j = gen.nextInt(streamCounter.toInt + 1)
@@ -99,12 +99,12 @@ object SimpleReservoirSampling {
                   data += element
                 }
               }
-              (data, Some((streamCounter + 1, reservoirCounter, reservoir)))
+              (data, Some((streamCounter + 1, reservoir)))
             }
             case None => {
               val reservoir = Array.ofDim[T](k)
               reservoir(0) = element
-              (Seq(element), Some((1L, 1, reservoir)))
+              (Seq(element), Some((1L, reservoir)))
             }
           }
         })

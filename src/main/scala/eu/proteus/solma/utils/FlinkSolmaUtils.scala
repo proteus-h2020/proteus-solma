@@ -51,6 +51,10 @@ object FlinkSolmaUtils {
     // Breeze specialized types
     env.registerType(breeze.linalg.DenseMatrix.zeros[Double](0, 0).getClass)
     env.registerType(breeze.linalg.CSCMatrix.zeros[Double](0, 0).getClass)
+
+    // Solma Stream events
+    env.registerType(classOf[eu.proteus.solma.events.StreamEvent])
+
   }
 
   /**
@@ -84,17 +88,29 @@ object FlinkSolmaUtils {
     env.registerType(breeze.linalg.CSCMatrix.zeros[Double](0, 0).getClass)
   }
 
-  def ensureKeyedStream[T](input: DataStream[T]): KeyedStream[(T, Int), Int] = {
+  def ensureKeyedStream[T](
+    input: DataStream[T],
+    funOpt: Option[(DataStream[Any]) => KeyedStream[(Any, Int), Int]]
+  ): KeyedStream[(T, Int), Int] = {
     input match {
       case keyed : KeyedStream[(T, Int), Int] => keyed
       case _ => {
-        val gen = new XORShiftRandom()
-        val max = input.executionEnvironment.getParallelism
-        implicit val typeInfo = TypeInformation.of(classOf[(T, Int)])
-        input
-          .map(x => (x, gen.nextInt(max)))
-          .keyBy(x => x._2)
+        funOpt match {
+          case Some(fun) => {
+            fun(input.asInstanceOf[DataStream[Any]]).asInstanceOf[KeyedStream[(T, Int), Int]]
+          }
+          case None => {
+            val gen = new XORShiftRandom()
+            val max = input.executionEnvironment.getParallelism
+            implicit val typeInfo = TypeInformation.of(classOf[(T, Int)])
+            input
+              .map(x => (x, gen.nextInt(max)))
+              .keyBy(x => x._2)
+          }
+        }
+
       }
     }
   }
+
 }
