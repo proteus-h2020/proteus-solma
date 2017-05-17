@@ -113,7 +113,7 @@ object Cuts{
       case 8 => Cuts.Cuts8
       case 9 => Cuts.Cuts9
       case 10 => Cuts.Cuts10
-      case _ => throw new RuntimeException("Number of cuts not supported")
+      case _ => throw new UnsupportedOperationException("Number of cuts not supported")
     }
   }
 
@@ -126,7 +126,7 @@ object Cuts{
   def distanceMatrix(numberCuts: Int) : Array[Array[Double]] = {
     numberCuts match {
       case 2 => Cuts.Distances2
-      case _ => throw new RuntimeException("Number of cuts not supported")
+      case _ => throw new UnsupportedOperationException("Number of cuts not supported")
     }
   }
 

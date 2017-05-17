@@ -17,20 +17,37 @@
 package eu.proteus.solma.sax
 
 import eu.proteus.solma.pipeline.TransformDataStreamOperation
+import eu.proteus.solma.utils.FlinkSolmaUtils
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala.createTypeInformation
-import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.contrib.streaming.scala.utils.DataStreamUtils
+import org.apache.flink.streaming.api.scala.KeyedStream
+import org.apache.flink.streaming.api.scala.function.WindowFunction
 import org.apache.flink.util.Collector
 
+/**
+ * The SAX transform operation performs two operations for a given stream: PAA and SAX. For the
+ * PAA algorithm, the stream is divided into windows of the user selected PAA size. On each
+ * window, a Z-normalization operation is applied first:
+ *
+ * {{{
+ *   x_i' = (x_i - avg(X_training)) / std(X_training)
+ * }}}
+ *
+ * Then, we average the values of the window. With the averaged values, the algorithm converts
+ * each value into a symbol of the alphabet. Several symbols are grouped as to form a word of
+ * a user-selected size.
+ *
+ * @tparam T The type of the datastream.
+ */
 class SAXStreamTransformOperation[T] extends TransformDataStreamOperation[SAX, T, String]{
 
   override def transformDataStream(
     instance: SAX,
     transformParameters: ParameterMap,
-    input: DataStream[T]): DataStream[String] = {
+    input: DataStream[T]): DataStream[(String, Int)] = {
 
     val avg = instance.trainingAvg
     val std = instance.trainingStd
@@ -41,46 +58,50 @@ class SAXStreamTransformOperation[T] extends TransformDataStreamOperation[SAX, T
     val wordSize = instance.getWordSize()
     val paaFragmentSize = instance.getPAAFragmentSize()
 
-    val avgNormWindowFunction = new AllWindowFunction[T, Double, GlobalWindow] {
-      override def apply(window: GlobalWindow, input: Iterable[T], out: Collector[Double]): Unit = {
+    val partitionedStream : KeyedStream[(T, Int), Int] = FlinkSolmaUtils.ensureKeyedStream[T](input)
 
-        val norm = input.map(in => {(in.toString.toDouble - instance.trainingAvg.get) / instance.trainingStd.get})
+    // The PAA function averages n consecutive values to smooth the signal and reduce the number
+    // of points in the SAX result.
+    val paaFunction = new WindowFunction[(T, Int), (Double, Int), Int, GlobalWindow] {
+      override def apply(
+        key: Int,
+        window: GlobalWindow,
+        input: Iterable[(T, Int)], out: Collector[(Double, Int)]): Unit = {
 
+        // Z-normalize the input data.
+        val norm = input.map(in => {
+          (in._1.toString.toDouble - instance.trainingAvg.get) / instance.trainingStd.get
+        })
+
+        // Average the values.
         val avg = norm.foldLeft(0.0)(_ + _) / norm.foldLeft(0)((acc, cur) => acc + 1)
-        // println(s"Input: ${input.mkString(", ")} => ${norm.mkString(", ")} => PAA => ${avg}")
-        out.collect(avg)
+        out.collect((avg, key))
       }
     }
 
-    val paaNorm = input.countWindowAll(paaFragmentSize).apply(avgNormWindowFunction)
+    val paaNormPartioned : KeyedStream[(Double, Int), Int]= partitionedStream
+      .countWindow(paaFragmentSize)
+      .apply(paaFunction)
+      .keyBy(r => r._2)
+
+    // val paaNorm = input.countWindowAll(paaFragmentSize).apply(avgNormWindowFunction)
 
     val cuts = instance.getAlphabetCuts()
 
-    val saxTransformFunction = new AllWindowFunction[Double, String, GlobalWindow] {
-      override def apply(window: GlobalWindow, input: Iterable[Double], out: Collector[String]): Unit = {
-        val word = input.map(Cuts.findLetter(cuts, _)).mkString
-        // println(s"Word: ${word}")
-        out.collect(word)
+    val saxFunction = new WindowFunction[(Double, Int), (String, Int), Int, GlobalWindow] {
+      override def apply(
+        key: Int,
+        window: GlobalWindow,
+        input: Iterable[(Double, Int)],
+        out: Collector[(String, Int)]): Unit = {
+
+        val word = input.map(t => Cuts.findLetter(cuts,t._1)).mkString
+        out.collect((word, key))
       }
     }
 
-    paaNorm.countWindowAll(wordSize).apply(saxTransformFunction)
+    paaNormPartioned.countWindow(wordSize).apply(saxFunction)
 
-  }
-
-  /**
-   * Normalize a number using the following expression:
-   * {{{
-   *   x_i' = (x_i - avg(X_training)) / std(X_training)
-   * }}}
-   * @param number The number to be normalized.
-   * @param avg The average of the training set.
-   * @param std The standard deviation of the training set.
-   * @return A normalized value.
-   */
-  private def zNormalize(number: Double, avg: Double, std: Double) : Double = {
-    println(s"zN(${number}) = " + (number - avg) / std)
-    (number - avg) / std
   }
 
 }
