@@ -17,10 +17,12 @@
 package eu.proteus.solma.sax
 
 import eu.proteus.solma.pipeline.StreamTransformer
+import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.ml.common.Parameter
 import org.apache.flink.ml.pipeline.Estimator
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala.KeyedStream
+import org.apache.flink.streaming.api.scala.createTypeInformation
 import org.slf4j.Logger
 
 /**
@@ -90,37 +92,35 @@ object SAX {
     override val defaultValue: Option[Int] = Some(PAAFragmentSize.DefaultFragmentSize)
   }
 
-  /**
-   * Case object to the define the partitioning operation.
-   */
-  case object PartitioningOperation extends
-    Parameter[(DataStream[Any]) => KeyedStream[(Any, Int), Int]] {
-
-    /**
-     * Default value.
-     */
-    override val defaultValue: Option[(DataStream[_]) => KeyedStream[(Any, Int), Int]] = Some(singleKeyPartitioning)
-
-    /**
-     * As the SAX algorithm transforms an input stream into a word stream, the semantics of the
-     * underlying partitioning need to match those of the use case. A single stream with domain
-     * semantics must be associated with a single partition as to not produce words that contain
-     * symbols from different partitions.
-     *
-     * @param input The input data stream.
-     * @return A KeyedStream with zero as the key.
-     */
-    def singleKeyPartitioning(input: DataStream[_]) : KeyedStream[(Any, Int), Int] = {
-      input.map(x => (x, 0)).keyBy(t => t._2)
-    }
-  }
-
   implicit def fitImplementation[T] = {
     new SAXFitOperation[T]
   }
 
-  implicit def transformImplementation[T] = {
+  implicit def transformImplementation[T <: Double] = {
     new SAXStreamTransformOperation[T]
+  }
+
+  /**
+   * Transform the input datastream in a KeyedStream. The method will reject data that is not
+   * associated with a key.
+   * @param input The input datastream with tuples containing the payload and the key.
+   * @tparam T The payload type.
+   * @return A KeyedStream.
+   */
+  private[sax] def toKeyedStream[T](
+    input: DataStream[(T, Int)]) : KeyedStream[(T, Int), Int] = {
+
+    input match {
+      case tuples : DataStream[(T, Int)] => {
+        implicit val typeInfo = TypeInformation.of(classOf[(Any, Int)])
+        tuples.asInstanceOf[DataStream[(T, Int)]].keyBy(t => t._2)
+      }
+      case _ => {
+        throw new UnsupportedOperationException(
+          "Cannot build a keyed stream from the given data type")
+      }
+    }
+
   }
 
 }
@@ -194,16 +194,6 @@ class SAX extends StreamTransformer[SAX] with Estimator[SAX]{
    */
   def getAlphabetSize() : Int = {
     this.parameters.get(SAX.AlphabetSize).get
-  }
-
-  /**
-   * Define the partitioning function to be used for the SAX transformation. Notice that the
-   * selected policy must match the semantics of the use case.
-   *
-   * @param f The partitioning function.
-   */
-  def usePartitioningFunction(f: (DataStream[_]) => KeyedStream[(Any, Int), Int]) : Unit = {
-    this.parameters.add(SAX.PartitioningOperation, f)
   }
 
   /**

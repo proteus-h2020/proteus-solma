@@ -22,15 +22,18 @@ import java.util.{HashMap => JHashMap}
 import eu.proteus.solma.pipeline.PredictDataStreamOperation
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala.DataStream
+import org.apache.flink.streaming.api.scala.KeyedStream
 import org.apache.flink.streaming.api.scala.createTypeInformation
 import org.apache.flink.streaming.api.scala.function.AllWindowFunction
+import org.apache.flink.streaming.api.scala.function.WindowFunction
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.util.Collector
 
 /**
  * Predict operation using the dictionary.
  */
-class SAXDictionaryPredictOperation[T] extends PredictDataStreamOperation[SAXDictionary, T, SAXPrediction]{
+class SAXDictionaryPredictOperation[T <: String]
+  extends PredictDataStreamOperation[SAXDictionary, (T, Int), SAXPrediction]{
 
   /** Calculates the predictions for all elements in the [[DataStream]] input
    *
@@ -42,28 +45,31 @@ class SAXDictionaryPredictOperation[T] extends PredictDataStreamOperation[SAXDic
   override def predictDataStream(
     instance: SAXDictionary,
     predictParameters: ParameterMap,
-    input: DataStream[T]): DataStream[SAXPrediction] = {
+    input: DataStream[(T, Int)]): DataStream[SAXPrediction] = {
 
     val windowSize = instance.getNumberWords()
+    val partitionedStream : KeyedStream[(T, Int), Int] = SAX.toKeyedStream[T](input)
 
-    val predictWindowFunction = new AllWindowFunction[T, SAXPrediction, GlobalWindow] {
+    val predictFunction = new WindowFunction[(T, Int), SAXPrediction, Int, GlobalWindow] {
       override def apply(
+        key: Int,
         window: GlobalWindow,
-        input: Iterable[T],
+        input: Iterable[(T, Int)],
         out: Collector[SAXPrediction]): Unit = {
 
         val freq = new JHashMap[String, AtomicLong]
         input.foreach(w => {
-          freq.putIfAbsent(w.toString, new AtomicLong(0))
-          freq.get(w.toString).incrementAndGet()
+          freq.putIfAbsent(w._1, new AtomicLong(0))
+          freq.get(w._1).incrementAndGet()
         })
 
         val prediction = instance.dictionary.get.predict(freq)
         out.collect(prediction)
       }
     }
-
-    input.countWindowAll(windowSize).apply(predictWindowFunction)
+    partitionedStream.countWindow(windowSize).apply(predictFunction)
 
   }
+
+
 }

@@ -60,7 +60,7 @@ object SAXDictionary{
     new SAXDictionaryFitOperation[T]
   }
 
-  implicit def predictImplementation[K] = {
+  implicit def predictImplementation[K <: String] = {
     new SAXDictionaryPredictOperation[K]
   }
 

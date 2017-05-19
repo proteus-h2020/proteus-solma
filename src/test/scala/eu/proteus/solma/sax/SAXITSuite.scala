@@ -90,39 +90,52 @@ class SAXITSuite extends FunSuite with Matchers with FlinkTestBase{
 
   test("Alphabet=2, PAA=3, WordSize=1"){
     val env = ExecutionEnvironment.getExecutionEnvironment
-    val trainingData : Seq[Double] = List(2, 3, 4, 8, 8, 9, 8, 6, 6, 5, 5, 5, 6, 2, 1)
-    val trainingDataSet : DataSet[Double] = env.fromCollection(trainingData)
+    val fittingData : Seq[Double] = List(2, 3, 4, 8, 8, 9, 8, 6, 6, 5, 5, 5, 6, 2, 1)
+    val testingData : Seq[(Double, Int)] = List(
+      (2, 0), (3, 0), (4, 0),
+      (8, 0), (8, 0), (9, 0),
+      (8, 0), (6, 0), (6, 0),
+      (5, 0), (5, 0), (5, 0),
+      (6, 0), (2, 0), (1, 0))
+    val trainingDataSet : DataSet[Double] = env.fromCollection(fittingData)
     val streamingEnv = StreamExecutionEnvironment.getExecutionEnvironment
     streamingEnv.setParallelism(4)
     streamingEnv.setMaxParallelism(4)
-    val evalDataSet : DataStream[Double] = streamingEnv.fromCollection(trainingData)
+    val evalDataSet : DataStream[(Double, Int)] = streamingEnv.fromCollection(testingData)
     val sax = new SAX().setPAAFragmentSize(3).setWordSize(1)
     sax.fit(trainingDataSet)
     sax.printInternalParameters()
     val transformed = sax.transform(evalDataSet)
-    val r : Iterator[String] = transformed.collect()
+    val r : Iterator[(String, Int)] = transformed.collect()
     val result = r.toList
-    val expected : Seq[String] = List("a", "b", "b", "a", "a")
+    val expected : Seq[(String, Int)] = List(("a", 0), ("b", 0), ("b", 0), ("a", 0), ("a", 0))
     assert(result === expected, "Result should match")
   }
 
+
   test("Alphabet=2, PAA=2, WordSize=2"){
     val env = ExecutionEnvironment.getExecutionEnvironment
-    val trainingData : Seq[Double] = List(2, 3, 4, 8, 8, 9, 8, 6, 6, 5, 5, 5, 6, 2, 1)
-    val trainingDataSet : DataSet[Double] = env.fromCollection(trainingData)
+    val fittingData : Seq[Double] = List(2, 3, 4, 8, 8, 9, 8, 6, 6, 5, 5, 5, 6, 2, 1)
+    val testingData : Seq[(Double, Int)] = List(
+      (2, 0), (3, 0),
+      (4, 0), (8, 0),
+      (8, 0), (9, 0),
+      (8, 0), (6, 0),
+      (6, 0), (5, 0),
+      (5, 0), (5, 0))
+    val trainingDataSet : DataSet[Double] = env.fromCollection(fittingData)
     val streamingEnv = StreamExecutionEnvironment.getExecutionEnvironment
     streamingEnv.setParallelism(4)
     streamingEnv.setMaxParallelism(4)
-    val evalDataSet : DataStream[Double] = streamingEnv.fromCollection(trainingData)
+    val evalDataSet : DataStream[(Double, Int)] = streamingEnv.fromCollection(testingData)
     val sax = new SAX().setPAAFragmentSize(2).setWordSize(2)
     sax.fit(trainingDataSet)
     sax.printInternalParameters()
     val transformed = sax.transform(evalDataSet)
-    val r : Iterator[String] = transformed.collect()
+    val r : Iterator[(String, Int)] = transformed.collect()
     val result = r.toList
-    val expected : Seq[String] = List("ab", "bb", "ba")
+    val expected : Seq[(String, Int)] = List(("ab", 0), ("bb", 0), ("ba", 0))
     assert(result === expected, "Result should match")
   }
-
 
 }

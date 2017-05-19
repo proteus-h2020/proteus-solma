@@ -17,14 +17,14 @@
 package eu.proteus.solma.sax
 
 import eu.proteus.solma.pipeline.TransformDataStreamOperation
-import eu.proteus.solma.utils.FlinkSolmaUtils
+import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala.createTypeInformation
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
-import org.apache.flink.contrib.streaming.scala.utils.DataStreamUtils
 import org.apache.flink.streaming.api.scala.KeyedStream
 import org.apache.flink.streaming.api.scala.function.WindowFunction
+import org.apache.flink.contrib.streaming.scala.utils.DataStreamUtils
 import org.apache.flink.util.Collector
 
 /**
@@ -42,12 +42,13 @@ import org.apache.flink.util.Collector
  *
  * @tparam T The type of the datastream.
  */
-class SAXStreamTransformOperation[T] extends TransformDataStreamOperation[SAX, T, String]{
+class SAXStreamTransformOperation[T <: Double]
+  extends TransformDataStreamOperation[SAX, (T, Int), (String, Int)]{
 
   override def transformDataStream(
     instance: SAX,
     transformParameters: ParameterMap,
-    input: DataStream[T]): DataStream[(String, Int)] = {
+    input: DataStream[(T, Int)]): DataStream[(String, Int)] = {
 
     val avg = instance.trainingAvg
     val std = instance.trainingStd
@@ -58,7 +59,7 @@ class SAXStreamTransformOperation[T] extends TransformDataStreamOperation[SAX, T
     val wordSize = instance.getWordSize()
     val paaFragmentSize = instance.getPAAFragmentSize()
 
-    val partitionedStream : KeyedStream[(T, Int), Int] = FlinkSolmaUtils.ensureKeyedStream[T](input)
+    val partitionedStream : KeyedStream[(T, Int), Int] = SAX.toKeyedStream[T](input)
 
     // The PAA function averages n consecutive values to smooth the signal and reduce the number
     // of points in the SAX result.
@@ -79,12 +80,10 @@ class SAXStreamTransformOperation[T] extends TransformDataStreamOperation[SAX, T
       }
     }
 
-    val paaNormPartioned : KeyedStream[(Double, Int), Int]= partitionedStream
+    val paaNormPartioned : KeyedStream[(Double, Int), Int] = partitionedStream
       .countWindow(paaFragmentSize)
       .apply(paaFunction)
       .keyBy(r => r._2)
-
-    // val paaNorm = input.countWindowAll(paaFragmentSize).apply(avgNormWindowFunction)
 
     val cuts = instance.getAlphabetCuts()
 
