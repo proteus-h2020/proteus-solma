@@ -16,7 +16,6 @@
 
 package eu.proteus.solma.sax
 
-import java.util.concurrent.atomic.AtomicLong
 import java.util.{HashMap => JHashMap}
 
 import eu.proteus.solma.pipeline.PredictDataStreamOperation
@@ -24,7 +23,6 @@ import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.streaming.api.scala.KeyedStream
 import org.apache.flink.streaming.api.scala.createTypeInformation
-import org.apache.flink.streaming.api.scala.function.AllWindowFunction
 import org.apache.flink.streaming.api.scala.function.WindowFunction
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.util.Collector
@@ -57,10 +55,11 @@ class SAXDictionaryPredictOperation[T <: String]
         input: Iterable[(T, Int)],
         out: Collector[SAXPrediction]): Unit = {
 
-        val freq = new JHashMap[String, AtomicLong]
+        val freq = new JHashMap[String, Long]
         input.foreach(w => {
-          freq.putIfAbsent(w._1, new AtomicLong(0))
-          freq.get(w._1).incrementAndGet()
+          freq.putIfAbsent(w._1, 0)
+          val previous = freq.get(w._1)
+          freq.put(w._1, previous + 1)
         })
 
         val prediction = instance.dictionary.get.predict(freq)

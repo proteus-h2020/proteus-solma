@@ -16,7 +16,6 @@
 
 package eu.proteus.solma.sax
 
-import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import java.util.{HashMap => JHashMap}
 import java.util.{Map => JMap}
@@ -31,7 +30,7 @@ import java.util.{HashSet => JHashSet}
  */
 case class WordBag(
   var id: Option[String] = None,
-  words: JMap[String, AtomicLong] = new JHashMap[String, AtomicLong](),
+  words: JMap[String, Long] = new JHashMap[String, Long](),
   tfIdf: JMap[String, Double] = new JHashMap[String, Double]()
 ){
 
@@ -40,8 +39,9 @@ case class WordBag(
    * @param word The word.
    */
   def addWord(word: String) : Unit = {
-    this.words.putIfAbsent(word, new AtomicLong(0))
-    this.words.get(word).incrementAndGet()
+    this.words.putIfAbsent(word, 0)
+    val previous = this.words.get(word)
+    this.words.put(word, previous + 1)
   }
 
   /**
@@ -57,7 +57,7 @@ case class WordBag(
    * @param vector The vector.
    * @return The similarity.
    */
-  def similarity(vector: JMap[String, AtomicLong]) : Double = {
+  def similarity(vector: JMap[String, Long]) : Double = {
     val keys = new JHashSet[String](vector.keySet())
     keys.addAll(this.tfIdf.keySet())
     val instance = this
@@ -67,7 +67,7 @@ case class WordBag(
     keys.forEach(new Consumer[String] {
       override def accept(word: String): Unit = {
         val a = instance.tfIdf.getOrDefault(word, 0.0d)
-        val b = vector.getOrDefault(word, new AtomicLong(0)).get()
+        val b = vector.getOrDefault(word, 0)
         sumTotal = sumTotal + (a*b)
         aSquared = aSquared + (a*a)
         bSquared = bSquared + (b*b)

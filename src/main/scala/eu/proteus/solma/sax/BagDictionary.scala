@@ -17,7 +17,6 @@
 package eu.proteus.solma.sax
 
 import java.util.Map.Entry
-import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.{HashMap => JHashMap}
@@ -96,9 +95,9 @@ case class BagDictionary(bags : JMap[String, WordBag] = new JHashMap[String, Wor
     this.bags.entrySet().forEach(new Consumer[Entry[String, WordBag]] {
       override def accept(e: Entry[String, WordBag]): Unit = {
         val tfIdf = new JHashMap[String, Double]()
-        e.getValue.words.forEach(new BiConsumer[String, AtomicLong] {
-          override def accept(word: String, freq: AtomicLong): Unit = {
-            val wordTfIdf = Math.log(1 + freq.get()) *
+        e.getValue.words.forEach(new BiConsumer[String, Long] {
+          override def accept(word: String, freq: Long): Unit = {
+            val wordTfIdf = Math.log(1 + freq) *
               (1 + Math.log(numClasses / dictionary.bagsWithWord(word)))
             tfIdf.put(word, wordTfIdf)
           }
@@ -115,7 +114,7 @@ case class BagDictionary(bags : JMap[String, WordBag] = new JHashMap[String, Wor
    * @param vector The vector to be compared.
    * @return A [[SAXPrediction]].
    */
-  def predict(vector: JMap[String, AtomicLong]) : SAXPrediction = {
+  def predict(vector: JMap[String, Long]) : SAXPrediction = {
 
     if(this.bags.isEmpty){
       throw new RuntimeException("No classes available for prediction")
