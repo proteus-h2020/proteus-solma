@@ -26,7 +26,7 @@ import eu.proteus.solma.pipeline.StreamFitOperation
 import eu.proteus.solma.pipeline.StreamTransformer
 import eu.proteus.solma.pipeline.TransformDataStreamOperation
 import eu.proteus.solma.utils.FlinkSolmaUtils
-import org.apache.flink.streaming.api.scala.DataStream
+import org.apache.flink.streaming.api.scala._
 import org.apache.flink.util.XORShiftRandom
 
 import scala.collection.mutable
@@ -83,7 +83,7 @@ object SimpleReservoirSampling {
           resultingParameters.get(PartitioningOperation))
         val k = resultingParameters(ReservoirSize)
         val gen = new XORShiftRandom()
-        implicit val typeInfo = TypeInformation.of(classOf[(Long, Array[T])])
+        implicit val typeInfo = createTypeInformation[(Long, Array[T])]
         statefulStream.flatMapWithState((in, state: Option[(Long, Array[T])]) => {
           val (element, _) = in
           state match {

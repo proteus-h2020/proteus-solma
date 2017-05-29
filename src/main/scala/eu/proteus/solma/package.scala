@@ -25,7 +25,7 @@ package object solma {
   implicit class RichDataStream[T](dataStream: DataStream[T]) {
 
     def fold[R: TypeInformation](zeroValue: R)(fun: (R, T) => R): DataStream[R] = {
-      implicit val typeInfo = TypeInformation.of(classOf[(Int, T)])
+      implicit val typeInfo = createTypeInformation[(Int, T)]
 
       val folder = new FoldFunction[(Int, T), R] {
         def fold(acc: R, v: (Int, T)) = {

@@ -68,7 +68,7 @@ object FlinkSolmaUtils {
           case None => {
             val gen = new XORShiftRandom()
             val max = input.executionEnvironment.getParallelism
-            implicit val typeInfo = TypeInformation.of(classOf[(T, Long)])
+            implicit val typeInfo = createTypeInformation[(T, Long)]
             input
               .map(x => (x, gen.nextInt(max).toLong))
               .keyBy(x => x._2)

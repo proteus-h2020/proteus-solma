@@ -113,7 +113,7 @@ object SAX {
 
     input match {
       case tuples : DataStream[(T, Int)] => {
-        implicit val typeInfo = TypeInformation.of(classOf[(Any, Int)])
+        implicit val typeInfo = createTypeInformation[(Any, Int)]
         tuples.asInstanceOf[DataStream[(T, Int)]].keyBy(t => t._2)
       }
       case _ => {
