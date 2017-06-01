@@ -58,21 +58,21 @@ object FlinkSolmaUtils {
 
   def ensureKeyedStream[T](
       input: DataStream[T],
-      funOpt: Option[(DataStream[Any]) => KeyedStream[(Any, Int), Int]]
-    ): KeyedStream[(T, Int), Int] = {
+      funOpt: Option[(DataStream[Any]) => KeyedStream[(Any, Long), Long]]
+    ): KeyedStream[(T, Long), Long] = {
     input match {
-      case keyed : KeyedStream[(T, Int), Int] => keyed
+      case keyed : KeyedStream[(T, Long), Long] => keyed
       case _ => {
         funOpt match {
           case Some(fun) => {
-            fun(input.asInstanceOf[DataStream[Any]]).asInstanceOf[KeyedStream[(T, Int), Int]]
+            fun(input.asInstanceOf[DataStream[Any]]).asInstanceOf[KeyedStream[(T, Long), Long]]
           }
           case None => {
             val gen = new XORShiftRandom()
             val max = input.executionEnvironment.getParallelism
-            implicit val typeInfo = TypeInformation.of(classOf[(T, Int)])
+            implicit val typeInfo = TypeInformation.of(classOf[(T, Long)])
             input
-              .map(x => (x, gen.nextInt(max)))
+              .map(x => (x, gen.nextInt(max).toLong))
               .keyBy(x => x._2)
           }
         }
