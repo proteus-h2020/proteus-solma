@@ -157,12 +157,12 @@ object MomentsEstimator {
   }
 
   implicit def transformMomentsEstimators[E <: StreamEvent] = {
-    new TransformDataStreamOperation[MomentsEstimator, E, (Int, Moments)]{
+    new TransformDataStreamOperation[MomentsEstimator, E, (Long, Moments)]{
       override def transformDataStream(
         instance: MomentsEstimator,
         transformParameters: ParameterMap,
         input: DataStream[E])
-        : DataStream[(Int, Moments)] = {
+        : DataStream[(Long, Moments)] = {
         val resultingParameters = instance.parameters ++ transformParameters
         val featuresCount = resultingParameters(FeaturesCount)
         val statefulStream = FlinkSolmaUtils.ensureKeyedStream[E](input, resultingParameters.get(PartitioningOperation))
@@ -183,7 +183,7 @@ object MomentsEstimator {
         })
 
         if (resultingParameters(AggregateMoments)) {
-          intermediate.fold(new mutable.HashMap[Int, Moments]())((acc: mutable.HashMap[Int, Moments], in) => {
+          intermediate.fold(new mutable.HashMap[Long, Moments]())((acc: mutable.HashMap[Long, Moments], in) => {
             val (pid, moments) = in
             acc(pid) = moments
             acc.remove(-1)

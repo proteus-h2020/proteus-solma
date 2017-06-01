@@ -28,7 +28,7 @@ trait StreamEstimator[Self] extends WithParameters with Serializable {
 
   that: Self =>
 
-  def setPartitioning[Training](fun: (DataStream[Any]) => KeyedStream[(Any, Int), Int]): Self = {
+  def setPartitioning[Training](fun: (DataStream[Any]) => KeyedStream[(Any, Long), Long]): Self = {
     parameters.add(StreamEstimator.PartitioningOperation, fun)
     this
   }
@@ -53,8 +53,8 @@ trait StreamEstimator[Self] extends WithParameters with Serializable {
 
 object StreamEstimator {
 
-  case object PartitioningOperation extends Parameter[(DataStream[Any]) => KeyedStream[(Any, Int), Int]] {
-    override val defaultValue: Option[(DataStream[_]) => KeyedStream[(Any, Int), Int]] = None
+  case object PartitioningOperation extends Parameter[(DataStream[Any]) => KeyedStream[(Any, Long), Long]] {
+    override val defaultValue: Option[(DataStream[_]) => KeyedStream[(Any, Long), Long]] = None
   }
 
   implicit def fallbackFitOperation[
