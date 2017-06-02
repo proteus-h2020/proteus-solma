@@ -7,9 +7,7 @@ import eu.proteus.solma.utils.FlinkTestBase
 import org.apache.flink.ml.math.{DenseVector, Vector}
 import org.apache.flink.streaming.api.scala._
 import org.scalatest.{FlatSpec, Matchers}
-/**
-  * Created by dung on 31/05/17.
-  */
+
 @Proteus
 class WeightedReservoirSamplingITSuite
   extends FlatSpec
