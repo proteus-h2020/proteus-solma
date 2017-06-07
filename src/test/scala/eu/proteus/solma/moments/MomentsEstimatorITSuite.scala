@@ -98,7 +98,7 @@ class MomentsEstimatorITSuite
     val eps = 1E-5
     while (it.hasNext) {
       val elem = it.next
-      if (elem.counters(0) == 47.0) {\\ Some modification may be needed. Pleae check the comment below.
+      if (elem.counters(0) == 47.0) {\\ Some modifications may be needed. Pleae check the comment below.
         elem.mean(0) should be (result(0).mean +- eps)
         elem.mean(1) should be (result(1).mean +- eps)
         elem.mean(2) should be (result(2).mean +- eps)
@@ -221,7 +221,7 @@ object MomentsEstimatorITSuite {
     Sample(0 to 1, DenseVector(Array(852.00, 2.00))),
     Sample(0 to 1, DenseVector(Array(1852.00, 4.00))),
     Sample(0 to 1, DenseVector(Array(1203.00, 3.00))),
-    Sample(2 to 2, DenseVector(Array(0.00))),\\if any of the following is not zeros, the testing will fail. Is that right? Could you check please
+    Sample(2 to 2, DenseVector(Array(0.00))),\\if the following Samples downward are not equal, the testing will fail. Is that right? Could you check please
     Sample(2 to 2, DenseVector(Array(0.00))),
     Sample(2 to 2, DenseVector(Array(0.00))),
     Sample(2 to 2, DenseVector(Array(0.00))),
