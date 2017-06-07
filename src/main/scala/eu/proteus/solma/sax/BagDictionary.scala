@@ -16,12 +16,39 @@
 
 package eu.proteus.solma.sax
 
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.Map.Entry
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.{HashMap => JHashMap}
 import java.util.{HashSet => JHashSet}
 import java.util.{Map => JMap}
+
+object BagDictionary{
+
+  /**
+   * Load the bag dictionary from file.
+   * @param basePath The base path that contains dumped classes.
+   * @return A [[BagDictionary]].
+   */
+  def fromModel(basePath: String) : BagDictionary = {
+    val bags : JMap[String, WordBag] = new JHashMap[String, WordBag]()
+    val base = new File(basePath)
+    if(base.exists() && base.isDirectory){
+      val storedBags = base.listFiles().filter(_.isFile)
+      storedBags.foreach(f => {
+        val wordBag = WordBag.fromFile(f.getAbsolutePath)
+        bags.put(wordBag.id.get, wordBag)
+      })
+    }else{
+      throw new UnsupportedOperationException("Expecting base directory with the model")
+    }
+    new BagDictionary(bags)
+  }
+
+}
 
 /**
  * Dictionary to store all the words.
@@ -117,7 +144,7 @@ case class BagDictionary(bags : JMap[String, WordBag] = new JHashMap[String, Wor
   def predict(vector: JMap[String, Long]) : SAXPrediction = {
 
     if(this.bags.isEmpty){
-      throw new RuntimeException("No classes available for prediction")
+      throw new UnsupportedOperationException("No classes available for prediction")
     }
 
     var result : Option[SAXPrediction] = None
@@ -133,5 +160,18 @@ case class BagDictionary(bags : JMap[String, WordBag] = new JHashMap[String, Wor
     result.get
   }
 
+  /**
+   * Store the dictionary in a given directory. A file per class will be created in that
+   * directory.
+   * @param basePath The base path.
+   */
+  def storeDictionary(basePath: String) : Unit = {
+    Files.createDirectories(Paths.get(basePath))
+    this.bags.forEach(new BiConsumer[String, WordBag] {
+      override def accept(id: String, wb: WordBag): Unit = {
+        wb.storeWordBag(basePath)
+      }
+    })
+  }
 
 }

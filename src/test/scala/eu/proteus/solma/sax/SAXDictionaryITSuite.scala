@@ -1,5 +1,7 @@
 package eu.proteus.solma.sax
 
+import java.io.File
+
 import eu.proteus.solma.utils.FlinkTestBase
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.api.scala.ExecutionEnvironment
@@ -110,6 +112,41 @@ class SAXDictionaryITSuite extends FunSuite with Matchers with FlinkTestBase {
     assertResult("A", "Expecting match on class A")(result.head.classId)
     assertResult(1.0, "Expecting perfect similarity")(result.last.similarity)
     assertResult("B", "Expecting match on class B")(result.last.classId)
+
+  }
+
+  test("Store dictionary"){
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(4)
+    val trainingData1 : Seq[String] = List("aa", "bb", "cc")
+    val dataset1 : DataSet[String] = env.fromCollection(trainingData1)
+    val toFit1 = dataset1.map((_, "A"))
+    val trainingData2 : Seq[String] = List("dd", "ee", "ff")
+    val dataset2 : DataSet[String] = env.fromCollection(trainingData2)
+    val toFit2 = dataset2.map((_, "B"))
+    val saxDictionary = new SAXDictionary()
+    saxDictionary.fit(toFit1)
+    saxDictionary.fit(toFit2)
+    val fitted = saxDictionary.getDictionary()
+    assert(fitted.isDefined, "Expected fitted dictionary")
+    saxDictionary.storeModel("/tmp/", "testDictionary")
+
+    val expectedBaseDir = new File("/tmp/testDictionary")
+    assert(expectedBaseDir.exists(), "Expecting output directory")
+
+    val newDictionary = new SAXDictionary()
+    newDictionary.loadModel("/tmp/", "testDictionary")
+    val internalDictionary = newDictionary.getDictionary()
+    assert(internalDictionary.isDefined, "Expecting loaded dictionary")
+    val bags = internalDictionary.get.bags
+    assert(bags.containsKey("A"), "Expecting class A")
+    assert(bags.containsKey("B"), "Expecting class B")
+    assert(bags.get("A").tfIdf.containsKey("aa"), "Expecting aa on A")
+    assert(bags.get("A").tfIdf.containsKey("bb"), "Expecting bb on A")
+    assert(bags.get("A").tfIdf.containsKey("cc"), "Expecting cc on A")
+    assert(bags.get("B").tfIdf.containsKey("dd"), "Expecting dd on A")
+    assert(bags.get("B").tfIdf.containsKey("ee"), "Expecting ee on A")
+    assert(bags.get("B").tfIdf.containsKey("ff"), "Expecting ff on A")
 
   }
 

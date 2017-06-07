@@ -16,6 +16,8 @@
 
 package eu.proteus.solma.sax
 
+import java.io.File
+
 import eu.proteus.solma.pipeline.StreamPredictor
 import org.apache.flink.ml.common.Parameter
 import org.apache.flink.ml.pipeline.Estimator
@@ -110,6 +112,42 @@ class SAXDictionary extends StreamPredictor[SAXDictionary] with Estimator[SAXDic
    */
   def getDictionary() : Option[BagDictionary] = {
     this.dictionary
+  }
+
+  /**
+   * Store the model.
+   *
+   * @param basePath The base path for storing the model.
+   * @param modelName The model name. A new directory inside basePath will be created.
+   */
+  def storeModel(basePath: String, modelName: String) : Unit = {
+    val targetPath = basePath + File.separator + modelName + File.separator
+    if(this.dictionary.isDefined){
+      this.dictionary.get.storeDictionary(targetPath)
+    }else{
+      throw new IllegalStateException("Fit operation has not been called")
+    }
+  }
+
+  /**
+   * Load the dictionary from a model.
+   *
+   * @param basePath The base path for stored models.
+   * @param modelName The model name.
+   */
+  def loadModel(basePath: String, modelName: String) : Unit = {
+    val targetPath = basePath + File.separator + modelName + File.separator
+    this.loadModel(targetPath)
+  }
+
+  /**
+   * Load the dictionary from a model.
+   *
+   * @param dictionaryPath The dictionary path.
+   */
+  def loadModel(dictionaryPath: String) : Unit = {
+    val dictionary = BagDictionary.fromModel(dictionaryPath)
+    this.dictionary = Some(dictionary)
   }
 
 }

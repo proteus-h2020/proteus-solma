@@ -16,10 +16,39 @@
 
 package eu.proteus.solma.sax
 
+import java.io.File
+import java.io.PrintWriter
+import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.{HashMap => JHashMap}
 import java.util.{Map => JMap}
 import java.util.{HashSet => JHashSet}
+
+import scala.io.Source
+
+object WordBag {
+
+  /**
+   * Load a word bag from the model stored in the file. The file must contain two columns with the
+   * word and the TF-IDF value.
+   * @param wordBagPath The path of the word bag class model.
+   */
+  def fromFile(wordBagPath : String) : WordBag = {
+    val inputFile = new File(wordBagPath)
+    val wordBagId = inputFile.getName.replaceFirst("[.][^.]+$", "")
+
+    val tfIdf: JMap[String, Double] = new JHashMap[String, Double]()
+
+    val lines = Source.fromFile(inputFile).getLines()
+    while(lines.hasNext){
+      val toAdd = lines.next().split(";")
+      tfIdf.put(toAdd(0), toAdd(1).toDouble)
+    }
+
+    new WordBag(id = Some(wordBagId), tfIdf = tfIdf)
+  }
+
+}
 
 /**
  * Class that contains all the words in a given class
@@ -76,6 +105,31 @@ case class WordBag(
     val similarity = sumTotal / (Math.sqrt(aSquared) * Math.sqrt(bSquared))
 
     similarity
+  }
+
+  /**
+   * Store the word bag. The bag is stored in a CSV on a file with the name of the class.
+   * @param basePath The base path for storing the file.
+   */
+  def storeWordBag(basePath : String) : Unit = {
+    if(this.id.isEmpty){
+      throw new UnsupportedOperationException("Cannot store wordbag without identifier")
+    }
+
+    if(this.tfIdf.size() == 0){
+      throw new UnsupportedOperationException("Cannot store wordbag without words")
+    }
+
+    val outputPath = basePath + File.separator + this.id.get + ".csv"
+    val output = new PrintWriter(new File(outputPath))
+
+    this.tfIdf.forEach(new BiConsumer[String, Double] {
+      override def accept(word: String, tfIdf: Double): Unit = {
+        output.println(s"${word};${tfIdf}")
+      }
+    })
+
+    output.close()
   }
 
 }
