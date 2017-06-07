@@ -62,7 +62,7 @@ class SAXDictionaryPredictOperation[T <: String]
           freq.put(w._1, previous + 1)
         })
 
-        val prediction = instance.dictionary.get.predict(freq)
+        val prediction = instance.dictionary.get.predict(key, freq)
         out.collect(prediction)
       }
     }
