@@ -33,7 +33,7 @@ trait StreamEvent extends Serializable
   def data: Vector
 }
 
-trait StreamEvent2 extends Serializable
+trait WeightedStreamEvent extends StreamEvent
 {
   def slice: IndexedSeq[Int]
   def data: Vector
