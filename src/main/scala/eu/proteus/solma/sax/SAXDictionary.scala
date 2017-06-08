@@ -23,14 +23,14 @@ import org.apache.flink.ml.pipeline.Estimator
 /**
  * Implementation of the SAX-VSM algorithm.
  *
- * This class contains the implementation of the dictionary required to store the document signature
- * per class. Notice that to use this with the provided SAX implementation it is required to
- * add the associated class identifier during the fit process. The fit process can be executed
- * as many times as required to include different classes into the dictionary. Once the dictionary
- * is built, the predict method will give information about the distance to the nearest class
- * in the dictionary for a given set of observations. Notice that in order to properly predict the
- * class and internal window will be used to match the length in words of the classes of the
- * dictionary.
+ * This class contains the implementation of the dictionary required to store the document
+ * signature per class. Notice that to use this with the provided SAX implementation it is
+ * required to add the associated class identifier during the fit process.
+ * The fit process can be executed as many times as required to include different classes
+ * into the dictionary. Once the dictionary is built, the predict method will give information
+ * about the distance to the nearest class in the dictionary for a given set of observations.
+ * Notice that in order to properly predict the class and internal window will be used to match
+ * the length in words of the classes of the dictionary.
  *
  * References:
  * Senin, Pavel, and Sergey Malinchik. "Sax-vsm: Interpretable time series classification using

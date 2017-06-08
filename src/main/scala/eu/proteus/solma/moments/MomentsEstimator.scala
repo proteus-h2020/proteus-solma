@@ -1,11 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (C) 2017 The Proteus Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -15,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package eu.proteus.solma.moments
 
 
@@ -29,6 +26,7 @@ import org.apache.flink.streaming.api.scala._
 import breeze.linalg.{Vector => BreezeVector}
 import eu.proteus.solma.events.StreamEvent
 import eu.proteus.solma.pipeline.StreamEstimator.PartitioningOperation
+import org.apache.flink.api.common.typeinfo.TypeInformation
 
 import scala.collection.mutable
 
@@ -68,7 +66,7 @@ class MomentsEstimator extends StreamTransformer[MomentsEstimator] {
 
 object MomentsEstimator {
 
-  // ====================================== Parameters =============================================
+  // ====================================== Parameters =========================================
 
   case object AggregateMoments extends Parameter[Boolean] {
     override val defaultValue: Option[Boolean] = Some(false)
@@ -88,7 +86,9 @@ object MomentsEstimator {
      private [moments] var M2: BreezeVector[Double]) {
 
     def this(x: BreezeVector[Double], slice: IndexedSeq[Int], n: Int) = {
-      this(BreezeVector.zeros[Double](n), BreezeVector.zeros[Double](n), BreezeVector.zeros[Double](n))
+      this(BreezeVector.zeros[Double](n),
+        BreezeVector.zeros[Double](n),
+        BreezeVector.zeros[Double](n))
       counters(slice) :+= 1.0
       currMean(slice) :+= x
     }
@@ -129,12 +129,13 @@ object MomentsEstimator {
       this
     }
 
-    override def clone(): Moments = {
+    def copy(): Moments = {
       new Moments(counters.copy, currMean.copy, M2.copy)
     }
 
     override def toString: String = {
-      "[counter=" + counters.toString + ",mean=" + mean.toString + ",variance=" + variance.toString + "]"
+      "[counter=" + counters.toString + ",mean=" +
+        mean.toString + ",variance=" + variance.toString + "]"
     }
   }
 
@@ -146,7 +147,7 @@ object MomentsEstimator {
 
   // ==================================== Operations ==========================================
 
-  implicit def fitNoOp[T] = {
+  implicit def fitNoOp[T : TypeInformation] = {
     new StreamFitOperation[MomentsEstimator, T]{
       override def fit(
           instance: MomentsEstimator,
@@ -165,7 +166,8 @@ object MomentsEstimator {
         : DataStream[(Long, Moments)] = {
         val resultingParameters = instance.parameters ++ transformParameters
         val featuresCount = resultingParameters(FeaturesCount)
-        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[E](input, resultingParameters.get(PartitioningOperation))
+        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[E](input,
+          resultingParameters.get(PartitioningOperation))
 
         val intermediate = statefulStream.mapWithState((in, state: Option[Moments]) => {
           val (event, pid) = in
@@ -183,18 +185,19 @@ object MomentsEstimator {
         })
 
         if (resultingParameters(AggregateMoments)) {
-          intermediate.fold(new mutable.HashMap[Long, Moments]())((acc: mutable.HashMap[Long, Moments], in) => {
-            val (pid, moments) = in
-            acc(pid) = moments
-            acc.remove(-1)
-            val it = acc.values.iterator
-            val ret = it.next.clone()
-            while (it.hasNext) {
-              ret.merge(it.next)
+          intermediate.fold(new mutable.HashMap[Long, Moments]())(
+            (acc: mutable.HashMap[Long, Moments], in) => {
+              val (pid, moments) = in
+              acc(pid) = moments
+              acc.remove(-1)
+              val it = acc.values.iterator
+              val ret = it.next.copy()
+              while (it.hasNext) {
+                ret.merge(it.next)
+              }
+              acc(-1) = ret
+              acc
             }
-            acc(-1) = ret
-            acc
-          }
         ).map(data => (0, data(-1)))
         } else {
           intermediate
@@ -202,6 +205,4 @@ object MomentsEstimator {
       }
     }
   }
-
-
 }
