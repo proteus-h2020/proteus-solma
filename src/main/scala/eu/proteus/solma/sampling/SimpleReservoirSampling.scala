@@ -1,11 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (C) 2017 The Proteus Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -24,7 +22,9 @@ import org.apache.flink.ml.math.Vector
 import SimpleReservoirSampling.ReservoirSize
 import eu.proteus.annotations.Proteus
 import eu.proteus.solma.pipeline.StreamEstimator.PartitioningOperation
-import eu.proteus.solma.pipeline.{StreamFitOperation, StreamTransformer, TransformDataStreamOperation}
+import eu.proteus.solma.pipeline.StreamFitOperation
+import eu.proteus.solma.pipeline.StreamTransformer
+import eu.proteus.solma.pipeline.TransformDataStreamOperation
 import eu.proteus.solma.utils.FlinkSolmaUtils
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.util.XORShiftRandom
@@ -79,7 +79,8 @@ object SimpleReservoirSampling {
         input: DataStream[T])
         : DataStream[T] = {
         val resultingParameters = instance.parameters ++ transformParameters
-        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input, resultingParameters.get(PartitioningOperation))
+        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input,
+          resultingParameters.get(PartitioningOperation))
         val k = resultingParameters(ReservoirSize)
         val gen = new XORShiftRandom()
         implicit val typeInfo = TypeInformation.of(classOf[(Long, Array[T])])

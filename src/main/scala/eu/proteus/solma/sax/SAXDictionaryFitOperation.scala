@@ -69,7 +69,8 @@ class SAXDictionaryFitOperation[T] extends FitOperation[SAXDictionary, T]{
     val fitting = input.map(_ match {
       case (value : String, classId : String) => (value.toString, classId.toString)
       case (value : String, classId : Int) => (value.toString, classId.toString)
-      case _ => throw new IllegalArgumentException("Expecting tuples of (String, String) or (String, Int)")
+      case _ => throw new IllegalArgumentException("Expecting tuples of (String, String)" +
+        " or (String, Int)")
     }).groupBy(1)
       .reduceGroup[WordBag](wordBagReduceFunction)
       .reduceGroup[BagDictionary](toDictionary)
