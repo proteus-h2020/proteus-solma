@@ -9,34 +9,21 @@ import org.apache.flink.ml.common.{Parameter, ParameterMap}
 import org.apache.flink.ml.math.Vector
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.util.XORShiftRandom
+import org.apache.flink.streaming.api.scala.createTypeInformation
 
 import scala.collection.mutable
 import scala.math.min
 import scala.reflect.ClassTag
 
 
-
-
-
-/*---Inputs-----------
-
----References--------
-* P.S. Efraimidis and P.G. Spirakis. Weighted random sampling with a reservoir. Information Processing Letters, 97(5):181–185, 2006.
----Author-----------
-* written by Wenjuan Wang, Department of Computing, Bournemouth University
-* Email: wangw@bournemouth.ac.uk
-*/
 @Proteus
 class WeightedReservoirSampling extends  StreamTransformer[WeightedReservoirSampling]{
   import WeightedReservoirSampling._
   def setWeightedReservoirSize(size: Int): WeightedReservoirSampling = {
     parameters.add(WeightedReservoirSize, size)
-
     this
   }
 }
-
-
 
 object WeightedReservoirSampling{
 
@@ -46,13 +33,16 @@ object WeightedReservoirSampling{
     override val defaultValue: Option[Int] = Some(4)
   }
 
+  //=====================================Extra=================================================
+
+  case class inp[T](var streamCounter:Long,var weight:mutable.ArrayBuffer[Double],
+                    var weightedreservoir:mutable.ArrayBuffer[T])
 
   // ==================================== Factory methods ==========================================
 
   def apply(): WeightedReservoirSampling = {
     new WeightedReservoirSampling()
   }
-
 
   // ==================================== Operations ==========================================
 
@@ -67,7 +57,6 @@ object WeightedReservoirSampling{
     }
   }
 
-
   implicit def treansformWeightedReservoirSampling[T <: Vector : TypeInformation : ClassTag] = {
     new TransformDataStreamOperation[WeightedReservoirSampling, T, mutable.ArrayBuffer[T]] {
       override def transformDataStream(
@@ -79,74 +68,43 @@ object WeightedReservoirSampling{
         val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input,resultingParameters.get(PartitioningOperation))
         val k = resultingParameters(WeightedReservoirSize)
         val gen = new XORShiftRandom()
-        implicit val typeInfo = TypeInformation.of(classOf[(Long,mutable.ArrayBuffer[Double], mutable.ArrayBuffer[T])])
-        implicit val retInfo = TypeInformation.of(classOf[mutable.ArrayBuffer[T]])
-        statefulStream.flatMapWithState((in, state: Option[(Long,mutable.ArrayBuffer[Double], mutable.ArrayBuffer[T])]) => {
-
-
-
+        implicit val typeInfo = createTypeInformation[inp[T]]
+        implicit val retInfo = createTypeInformation[mutable.ArrayBuffer[T]]
+        statefulStream.flatMapWithState((in, state: Option[inp[T]]) => {
           val (element, _) = in
           state match {
             case Some(curr) => {
-              val (streamCounter, weight, weightedreservoir) = curr
-
+              val weighinfo = curr
               var ret: Seq[mutable.ArrayBuffer[T]] = Seq()
-
-              if (streamCounter < k) {
-
-                weightedreservoir(streamCounter.toInt) =element
-                ret = Seq(weightedreservoir.slice(0, streamCounter.toInt + 1))
-                weight(streamCounter.toInt) = scala.math.pow(gen.nextDouble(), 1/element(0))
+              if (weighinfo.streamCounter < k) {
+                weighinfo.weightedreservoir(weighinfo.streamCounter.toInt) =element
+                ret = Seq(weighinfo.weightedreservoir.slice(0, weighinfo.streamCounter.toInt + 1))
+                weighinfo.weight(weighinfo.streamCounter.toInt) = scala.math.pow(gen.nextDouble(), 1/element(0))
 
               } else {
-
-
-
                 val key_current= scala.math.pow(gen.nextDouble(), 1/element(0))
-               // val T =  weight.min
-               // val T_index = weight.indexOf(T)
-               val T =  weight.reduceLeft(min)
-                val T_index = weight.view.zipWithIndex.minBy(_._1)._2
+               val T =  weighinfo.weight.reduceLeft(min)
+                val T_index = weighinfo.weight.view.zipWithIndex.minBy(_._1)._2
                 if (key_current > T){
-
-                  weightedreservoir(T_index)= element
-                  ret = Seq(weightedreservoir)
-                  weight(T_index)=key_current
+                  weighinfo.weightedreservoir(T_index)= element
+                  ret = Seq(weighinfo.weightedreservoir)
+                  weighinfo.weight(T_index)=key_current
                 }
-
-
-
               }
-              (ret, Some((streamCounter + 1,weight, weightedreservoir)))
-
-
-
+              weighinfo.streamCounter+=1
+              (ret, Some(weighinfo))
             }
-
             case None => {
               val weightedreservoir = mutable.ArrayBuffer.fill[T](k)(null.asInstanceOf[T])
               weightedreservoir(0) = element
               val weight= mutable.ArrayBuffer.fill[Double](k)(null.asInstanceOf[Double])
               weight(0)=scala.math.pow(gen.nextDouble(), 1/element(0))
-              (Seq(weightedreservoir.slice(0, 1)), Some((1L,weight, weightedreservoir)))
-
+              (Seq(weightedreservoir.slice(0, 1)), Some(inp(1L,weight, weightedreservoir)))
             }
           }
-
-
-
-
         }
-
         )
       }
-
-
     }
   }
-
-
-
-
-
 }
