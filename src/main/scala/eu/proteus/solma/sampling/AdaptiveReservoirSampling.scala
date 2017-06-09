@@ -9,51 +9,36 @@ import org.apache.flink.ml.common.{Parameter, ParameterMap}
 import org.apache.flink.ml.math.Vector
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.util.XORShiftRandom
+import org.apache.flink.streaming.api.scala.createTypeInformation
 
 import scala.collection.mutable
-import scala.math.min
 import scala.reflect.ClassTag
 import scala.util.Random
 
 
 
-
-/* ---Inputs-------
----References------
-* M. Al-Kateb, B. S. Lee and X. S. Wang, "Adaptive-Size Reservoir Sampling over Data Streams," 19th International Conference on Scientific and Statistical Database Management (SSDBM 2007),
- Banff, Alta., 2007, pp. 22-22.doi: 10.1109/SSDBM.2007.29
----Author-----------
-* written by Wenjuan Wang, Department of Computing, Bournemouth University
-* Email: wangw@bournemouth.ac.uk
-*/
 @Proteus
 class AdaptiveReservoirSampling extends  StreamTransformer[AdaptiveReservoirSampling]{
   import AdaptiveReservoirSampling._
   def setAdaptiveReservoirSize(size: Int): AdaptiveReservoirSampling = {
     parameters.add(AdaptiveReservoirSize, size)
-
     this
   }
 
-
   def setAdaptiveReservoirNumberToChange(NumberToChange: Int): AdaptiveReservoirSampling = {
     parameters.add(AdaptiveReservoirNumberToChange, NumberToChange)
-
     this
   }
 
   def setAdaptiveReservoirThreshold(Threshold: Double): AdaptiveReservoirSampling = {
     parameters.add(AdaptiveReservoirThreshold, Threshold)
-
     this
   }
+
   def setAdaptiveReservoirNewSize(Ch: Int): AdaptiveReservoirSampling = {
     parameters.add(Change, Ch)
-
     this
   }
-
-
 }
 
 
@@ -79,7 +64,6 @@ object AdaptiveReservoirSampling{
   def factorial2(n:Int,result:Int):Int = if (n==0) result else factorial2(n-1,n*result)
   def factorial(n: Int): Int = factorial2(n,1)
   def min_m (i: Int,ReservoirSize: Int,delta: Int,threshold: Double) : Int = {
-
     var m = delta
     var UC = 0.0
     var x = ReservoirSize
@@ -133,8 +117,9 @@ object AdaptiveReservoirSampling{
         val thresh=resultingParameters(AdaptiveReservoirThreshold)
         val changedReservoirSize = resultingParameters(Change)
         val gen = new XORShiftRandom()
-        implicit val typeInfo = TypeInformation.of(classOf[(Long,Long,Long,mutable.ArrayBuffer[T],mutable.ArrayBuffer[T], mutable.ArrayBuffer[T])])
-        implicit val retInfo = TypeInformation.of(classOf[mutable.ArrayBuffer[T]])
+        implicit val typeInfo = createTypeInformation[(Long,Long,Long,mutable.ArrayBuffer[T],
+                                                       mutable.ArrayBuffer[T], mutable.ArrayBuffer[T])])
+        implicit val retInfo = createTypeInformation[mutable.ArrayBuffer[T]]
         var j : Int = 0
         var m : Int = 0
         var x : Int = 0
@@ -143,38 +128,23 @@ object AdaptiveReservoirSampling{
 
 
           val (element,_)=in
-
           state match {
-            case Some(curr) => {
-
-
+            case Some(curr) => 
               var (streamCounter1,streamCounter2,streamCounter3,adaptedReserS1,adaptedReserS2,adaptivereservoir) = curr
-
               var ret: Seq[mutable.ArrayBuffer[T]] = Seq()
-
-
               if (streamCounter1 < k) {
-
                 adaptivereservoir(streamCounter1.toInt) =element
-
                 streamCounter1 += 1
                 streamCounter2+=1}
-
-
               else if (streamCounter1 == nboCh*k)
                 {
-
-
-
                   if (streamCounter1==streamCounter2)
                   {
                     val  delta = changedReservoirSize - k
                     if (delta <= 0) {
-
                       adaptivereservoir =  Random.shuffle(adaptivereservoir.toList).take(changedReservoirSize).to[mutable.ArrayBuffer]
                       streamCounter1+=1
                       streamCounter2+=1
-
                     }else{
                       m = min_m(streamCounter1.toInt,k,delta,thresh)
                       if(m==delta){
@@ -194,10 +164,7 @@ object AdaptiveReservoirSampling{
                       streamCounter3 += 1
                       streamCounter2+=1
                     } else {
-
-
                       j = gen.nextInt(m)
-
                       if (j < remainingSize)
                         adaptedReserS2(j)  = element
                       streamCounter2+=1
@@ -206,59 +173,30 @@ object AdaptiveReservoirSampling{
                     if (streamCounter2==streamCounter1+m){ streamCounter1+=m}
                   }
                   k = changedReservoirSize
-
                 }else {
                   j = gen.nextInt(streamCounter1.toInt)
                   if (j < k)
                     if(adaptivereservoir.length<=j) {
                       adaptivereservoir=adaptivereservoir++mutable.ArrayBuffer.fill[T](j-adaptivereservoir.length+1)(null.asInstanceOf[T])
-
                       adaptivereservoir(j) = element
                     }
-
-
-
-
                   streamCounter1 += 1
                   streamCounter2 +=1
                 }
-
               ret = Seq(adaptivereservoir.filter(i=>i != null))
               (ret, Some(streamCounter1,streamCounter2 ,streamCounter3,adaptedReserS1,adaptedReserS2, adaptivereservoir))
-
-
               }
-
-
-
-
             case None => {
-
-
-
-
               var adaptivereservoir = mutable.ArrayBuffer.fill[T](k)(null.asInstanceOf[T])
               var adaptedReserS1 = mutable.ArrayBuffer.fill[T](0)(null.asInstanceOf[T])
               var adaptedReserS2 = mutable.ArrayBuffer.fill[T](0)(null.asInstanceOf[T])
               adaptivereservoir(0)=element
               (Seq(adaptivereservoir.slice(0,1)),Some(1L,1L,1L,adaptedReserS1,adaptedReserS2,adaptivereservoir))
-
-
-
             }
           }
-
         }
-
         )
       }
-
-
     }
   }
-
-
-
-
-
 }
