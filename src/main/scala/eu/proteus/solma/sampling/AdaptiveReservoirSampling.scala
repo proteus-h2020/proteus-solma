@@ -76,7 +76,8 @@ object AdaptiveReservoirSampling{
   }
 
   //=====================================Extra=================================================
-  def factorial(n: Int): Int = {   if (n == 0) 1 else n * factorial(n-1)  }
+  def factorial2(n:Int,result:Int):Int = if (n==0) result else factorial2(n-1,n*result)
+  def factorial(n: Int): Int = factorial2(n,1)
   def min_m (i: Int,ReservoirSize: Int,delta: Int,threshold: Double) : Int = {
 
     var m = delta
