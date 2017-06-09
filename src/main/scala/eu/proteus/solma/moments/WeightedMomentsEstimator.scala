@@ -81,7 +81,8 @@ object WeightedMomentsEstimator {
                  private [moments] var currweight:BreezeVector[Double] ) {
 
     def this(x: BreezeVector[Double], slice: IndexedSeq[Int], n: Int,weight:BreezeVector[Double]) = {
-      this(BreezeVector.zeros[Double](n), BreezeVector.zeros[Double](n), BreezeVector.zeros[Double](n),BreezeVector.zeros[Double](n))
+      this(BreezeVector.zeros[Double](n), BreezeVector.zeros[Double](n), 
+            BreezeVector.zeros[Double](n),BreezeVector.zeros[Double](n))
 
       counters(slice) :+= 1.0
       currMean(slice) :+= x
@@ -112,7 +113,7 @@ object WeightedMomentsEstimator {
 
     def merge(that: WeightedMoments): this.type = {
       counters :+= that.counters
-     M2:+=that.M2
+      M2:+=that.M2
       M2:+=currweight:*(currMean:*currMean)
       M2:+=that.currweight:*(that.currMean:*that.currMean)
       val del=currMean.copy
@@ -121,14 +122,11 @@ object WeightedMomentsEstimator {
       del:^= 2.0
       del:/=currweight:+that.currweight
       M2:-=del
-
-
       currMean=currweight:*currMean
       val temp=that.currMean:*that.currweight
       currweight:+=that.currweight
       currMean=(temp:+currMean):/currweight
       this
-
     }
 
     override def clone(): WeightedMoments = {
@@ -154,7 +152,7 @@ object WeightedMomentsEstimator {
                         instance: WeightedMomentsEstimator,
                         fitParameters: ParameterMap,
                         input: DataStream[T])
-      : Unit = {}
+                        : Unit = {}
     }
   }
 
@@ -164,7 +162,7 @@ object WeightedMomentsEstimator {
                                         instance: WeightedMomentsEstimator,
                                         transformParameters: ParameterMap,
                                         input: DataStream[E])
-      : DataStream[(Int, WeightedMoments)] = {
+        : DataStream[(Int, WeightedMoments)] = {
         val resultingParameters = instance.parameters ++ transformParameters
         val featuresCount = resultingParameters(FeaturesCount)
         val statefulStream = FlinkSolmaUtils.ensureKeyedStream[E](input, resultingParameters.get(PartitioningOperation))
@@ -174,10 +172,8 @@ object WeightedMomentsEstimator {
           val slice = event.slice
           val x = event.data.asBreeze.copy
           val w=event.weight.asBreeze.copy
-
           val metrics = state match {
             case Some(curr) => {
-
               curr.process(x, slice,w)
             }
             case None => {
@@ -186,7 +182,6 @@ object WeightedMomentsEstimator {
           }
           ((pid, metrics), Some(metrics))
         })
-
 
         if (resultingParameters(AggregateWeightedMoments)) {
           intermediate.fold(new mutable.HashMap[Int, WeightedMoments]())((acc: mutable.HashMap[Int, WeightedMoments], in) => {
@@ -198,11 +193,9 @@ object WeightedMomentsEstimator {
             while (it.hasNext) {
               ret.merge(it.next)
             }
-
             acc(-1) = ret
             acc
           }
-
           ).map(data => (0, data(-1)))
         } else {
           intermediate
@@ -210,6 +203,5 @@ object WeightedMomentsEstimator {
       }
     }
   }
-
 
 }
