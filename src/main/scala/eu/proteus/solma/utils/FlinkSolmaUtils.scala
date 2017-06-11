@@ -21,6 +21,8 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.util.XORShiftRandom
 
+import scala.reflect.ClassTag
+
 @Proteus
 object FlinkSolmaUtils {
   def registerFlinkMLTypes(env: StreamExecutionEnvironment): Unit = {
@@ -54,7 +56,7 @@ object FlinkSolmaUtils {
 
   }
 
-  def ensureKeyedStream[T](
+  def ensureKeyedStream[T : TypeInformation : ClassTag](
       input: DataStream[T],
       funOpt: Option[(DataStream[Any]) => KeyedStream[(Any, Long), Long]]
     ): KeyedStream[(T, Long), Long] = {

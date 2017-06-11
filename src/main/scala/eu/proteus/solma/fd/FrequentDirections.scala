@@ -97,7 +97,7 @@ object FrequentDirections {
 
   var ell, d: Int = -1
 
-  implicit def treansformFrequentDirections[T <: Vector : TypeInformation] = {
+  implicit def treansformFrequentDirections[T <: Vector : TypeInformation : ClassTag] = {
     new TransformDataStreamOperation[FrequentDirections, T, T] {
       override def transformDataStream(
           instance: FrequentDirections,

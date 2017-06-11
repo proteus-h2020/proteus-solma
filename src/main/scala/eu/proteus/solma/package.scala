@@ -20,11 +20,13 @@ import org.apache.flink.api.common.functions.FoldFunction
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.scala._
 
+import scala.reflect.ClassTag
+
 package object solma {
 
-  implicit class RichDataStream[T](dataStream: DataStream[T]) {
+  implicit class RichDataStream[T : TypeInformation : ClassTag](dataStream: DataStream[T]) {
 
-    def fold[R: TypeInformation](zeroValue: R)(fun: (R, T) => R): DataStream[R] = {
+    def fold[R : TypeInformation : ClassTag](zeroValue: R)(fun: (R, T) => R): DataStream[R] = {
       implicit val typeInfo = createTypeInformation[(Int, T)]
 
       val folder = new FoldFunction[(Int, T), R] {

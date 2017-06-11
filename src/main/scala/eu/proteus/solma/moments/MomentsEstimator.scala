@@ -29,6 +29,7 @@ import eu.proteus.solma.pipeline.StreamEstimator.PartitioningOperation
 import org.apache.flink.api.common.typeinfo.TypeInformation
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 
 /**
   * A simple stream transformer that ingests a stream of samples and outputs
@@ -157,7 +158,7 @@ object MomentsEstimator {
     }
   }
 
-  implicit def transformMomentsEstimators[E <: StreamEvent] = {
+  implicit def transformMomentsEstimators[E <: StreamEvent : TypeInformation : ClassTag] = {
     new TransformDataStreamOperation[MomentsEstimator, E, (Long, Moments)]{
       override def transformDataStream(
         instance: MomentsEstimator,
