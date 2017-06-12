@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package eu.proteus.annotations;
-
-import org.apache.flink.annotation.Public;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
+package eu.proteus.solma.sax
 
 /**
- * Interface to mark methods developed within PROTEUS EU H2020 project.
+ * Class to represent the prediction of a given window of the time series. It will
+ * be used to return the nearest class.
+ *
+ * @param classId The class identifier.
+ * @param similarity The similarity value.
  */
-@Documented
-@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR })
-@Public
-public @interface Proteus {
-}
+case class SAXPrediction(classId: String, similarity: Double)

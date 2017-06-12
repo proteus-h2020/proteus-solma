@@ -1,11 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (C) 2017 The Proteus Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -19,13 +17,19 @@
 package eu.proteus.solma.pipeline
 
 import eu.proteus.solma.utils.FlinkSolmaUtils
-import org.apache.flink.ml.common.{ParameterMap, WithParameters}
+import org.apache.flink.ml.common.{Parameter, ParameterMap, WithParameters}
 import org.apache.flink.streaming.api.scala._
 
 import scala.reflect.runtime.universe._
 
 trait StreamEstimator[Self] extends WithParameters with Serializable {
+
   that: Self =>
+
+  def setPartitioning[Training](fun: (DataStream[Any]) => KeyedStream[(Any, Long), Long]): Self = {
+    parameters.add(StreamEstimator.PartitioningOperation, fun)
+    this
+  }
 
   /** Fits the estimator to the given input data. The fitting logic is contained in the
     * [[StreamFitOperation]]. The computed state will be stored in the implementing class.
@@ -46,6 +50,11 @@ trait StreamEstimator[Self] extends WithParameters with Serializable {
 }
 
 object StreamEstimator {
+
+  case object PartitioningOperation
+    extends Parameter[(DataStream[Any]) => KeyedStream[(Any, Long), Long]] {
+    override val defaultValue: Option[(DataStream[_]) => KeyedStream[(Any, Long), Long]] = None
+  }
 
   implicit def fallbackFitOperation[
       Self: TypeTag,

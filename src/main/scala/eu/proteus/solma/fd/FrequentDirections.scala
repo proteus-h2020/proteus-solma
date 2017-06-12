@@ -1,11 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (C) 2017 The Proteus Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -30,6 +28,7 @@ import org.apache.flink.streaming.api.scala._
 import eu.proteus.solma._
 import breeze.linalg.svd.{SVD => BreezeSVD}
 import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, Vector => BreezeVector}
+import eu.proteus.solma.pipeline.StreamEstimator.PartitioningOperation
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -106,16 +105,20 @@ object FrequentDirections {
           input: DataStream[T])
       : DataStream[T] = {
         val resultingParameters = instance.parameters ++ transformParameters
-        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](input)
+        val statefulStream = FlinkSolmaUtils.ensureKeyedStream[T](
+          input, resultingParameters.get(PartitioningOperation))
         ell = resultingParameters(SketchSize)
         d = resultingParameters(FeaturesNumber)
-        assert(ell < d * 2, "the sketch size should be smaller than twice the number of features")
-        val sketchesStream = statefulStream.flatMapWithState((in, state: Option[Sketch]) => {
-          val (elem, _) = in
-          val out = new ListBuffer[BreezeVector[Double]]()
-          val sketch = updateSketch(elem.asBreeze, state, out)
-          (out, Some(sketch))
-        })
+        assert(ell < d * 2, "the sketch size should be smaller" +
+          " than twice the number of features")
+        val sketchesStream = statefulStream.flatMapWithState(
+          (in, state: Option[Sketch]) => {
+            val (elem, _) = in
+            val out = new ListBuffer[BreezeVector[Double]]()
+            val sketch = updateSketch(elem.asBreeze, state, out)
+            (out, Some(sketch))
+          }
+        )
         if (resultingParameters(AggregateSketches)) {
           sketchesStream.fold(None.asInstanceOf[Option[Sketch]])((acc, item) => {
             Some(updateSketch(item, acc))

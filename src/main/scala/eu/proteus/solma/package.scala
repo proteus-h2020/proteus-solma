@@ -1,11 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (C) 2017 The Proteus Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -22,12 +20,14 @@ import org.apache.flink.api.common.functions.FoldFunction
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.scala._
 
+import scala.reflect.ClassTag
+
 package object solma {
 
-  implicit class RichDataStream[T](dataStream: DataStream[T]) {
+  implicit class RichDataStream[T : TypeInformation : ClassTag](dataStream: DataStream[T]) {
 
-    def fold[R: TypeInformation](zeroValue: R)(fun: (R, T) => R): DataStream[R] = {
-      implicit val typeInfo = TypeInformation.of(classOf[(Int, T)])
+    def fold[R : TypeInformation : ClassTag](zeroValue: R)(fun: (R, T) => R): DataStream[R] = {
+      implicit val typeInfo = createTypeInformation[(Int, T)]
 
       val folder = new FoldFunction[(Int, T), R] {
         def fold(acc: R, v: (Int, T)) = {
@@ -40,4 +40,5 @@ package object solma {
     }
 
   }
+
 }

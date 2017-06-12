@@ -1,11 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (C) 2017 The Proteus Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -22,6 +20,8 @@ import eu.proteus.annotations.Proteus
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.util.XORShiftRandom
+
+import scala.reflect.ClassTag
 
 @Proteus
 object FlinkSolmaUtils {
@@ -50,18 +50,33 @@ object FlinkSolmaUtils {
     // Breeze specialized types
     env.registerType(breeze.linalg.DenseMatrix.zeros[Double](0, 0).getClass)
     env.registerType(breeze.linalg.CSCMatrix.zeros[Double](0, 0).getClass)
+
+    // Solma Stream events
+    env.registerType(classOf[eu.proteus.solma.events.StreamEvent])
+
   }
 
-  def ensureKeyedStream[T](input: DataStream[T]): KeyedStream[(T, Int), Int] = {
+  def ensureKeyedStream[T : TypeInformation : ClassTag](
+      input: DataStream[T],
+      funOpt: Option[(DataStream[Any]) => KeyedStream[(Any, Long), Long]]
+    ): KeyedStream[(T, Long), Long] = {
     input match {
-      case keyed : KeyedStream[(T, Int), Int] => keyed
+      case keyed : KeyedStream[(T, Long), Long] => keyed
       case _ => {
-        val gen = new XORShiftRandom()
-        val max = input.executionEnvironment.getParallelism
-        implicit val typeInfo = TypeInformation.of(classOf[(T, Int)])
-        input
-          .map(x => (x, gen.nextInt(max)))
-          .keyBy(x => x._2)
+        funOpt match {
+          case Some(fun) => {
+            fun(input.asInstanceOf[DataStream[Any]]).asInstanceOf[KeyedStream[(T, Long), Long]]
+          }
+          case None => {
+            val gen = new XORShiftRandom()
+            val max = input.executionEnvironment.getParallelism
+            implicit val typeInfo = createTypeInformation[(T, Long)]
+            input
+              .map(x => (x, gen.nextInt(max).toLong))
+              .keyBy(x => x._2)
+          }
+        }
+
       }
     }
   }

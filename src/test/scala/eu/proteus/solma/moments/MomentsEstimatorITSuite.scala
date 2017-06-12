@@ -1,11 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright (C) 2017 The Proteus Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -28,6 +26,9 @@ import org.apache.flink.streaming.api.scala._
 import org.apache.flink.contrib.streaming.scala.utils._
 import org.scalatest.{FlatSpec, Matchers}
 import breeze.stats.meanAndVariance
+import eu.proteus.solma.events.StreamEvent
+
+import scala.collection.mutable
 
 @Proteus
 class MomentsEstimatorITSuite
@@ -42,9 +43,9 @@ class MomentsEstimatorITSuite
 
   it should "estimate the mean and var of a stream" in {
 
-    val m = linalg.DenseMatrix.zeros[Double](data.length, data.head.size)
+    val m = linalg.DenseMatrix.zeros[Double](data.length, data.head.data.size)
     for (i <- data.indices) {
-      m(i, ::) := data(i).asBreeze.t
+      m(i, ::) := data(i).data.asBreeze.t
     }
     val result = meanAndVariance(m(::, *))
 
@@ -55,13 +56,15 @@ class MomentsEstimatorITSuite
     val stream = env.fromCollection(data)
 
     val estimator = MomentsEstimator()
+      .setFeaturesCount(3)
+      .enableAggregation(true)
 
-    val it = estimator.transform(stream).collect()
+    val it: scala.Iterator[Moments] = estimator.transform(stream).map(_._2).collect()
 
-    val eps = 1e06
+    val eps = 1E-5
     while (it.hasNext) {
       val elem = it.next
-      if (elem.counter == 47) {
+      if (elem.counters(0) == 47.0) {
         elem.mean(0) should be (result(0).mean +- eps)
         elem.mean(1) should be (result(1).mean +- eps)
         elem.mean(2) should be (result(2).mean +- eps)
@@ -72,56 +75,107 @@ class MomentsEstimatorITSuite
     }
   }
 
+  it should "estimate the mean and var of a stream on a features subset" in {
+
+    val m = linalg.DenseMatrix.zeros[Double](data.length, data.head.data.size)
+    for (i <- data.indices) {
+      m(i, ::) := data(i).data.asBreeze.t
+    }
+    val result = meanAndVariance(m(::, *))
+
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(4)
+    env.setMaxParallelism(4)
+
+    val data2: mutable.ListBuffer[Sample] = mutable.ListBuffer[Sample]()
+
+    for (s <- data) {
+      val vec = s.data.asBreeze
+      data2 += Sample(0 to 1, vec(0 to 1).toDenseVector.fromBreeze)
+      data2 += Sample(2 to 2, vec(2 to 2).toDenseVector.fromBreeze)
+    }
+
+    val stream = env.fromCollection(data2)
+
+    val estimator = MomentsEstimator()
+      .setFeaturesCount(3)
+      .enableAggregation(true)
+
+    val it: scala.Iterator[Moments] = estimator.transform(stream).map(_._2).collect()
+
+    val eps = 1E-5
+    while (it.hasNext) {
+      val elem = it.next
+      if (elem.counters(0) == data2.length) {
+        elem.mean(0) should be (result(0).mean +- eps)
+        elem.mean(1) should be (result(1).mean +- eps)
+        elem.mean(2) should be (result(2).mean +- eps)
+        elem.variance(0) should be (result(0).variance +- eps)
+        elem.variance(1) should be (result(1).variance +- eps)
+        if (!java.lang.Double.isNaN(elem.variance(2))) {
+          elem.variance(2) should be (result(2).variance +- eps)
+        }
+      }
+    }
+  }
+
 }
 
 object MomentsEstimatorITSuite {
-  val data: Seq[Vector] = List(
-    DenseVector(Array(2104.00, 3.00, 0.0)),
-    DenseVector(Array(1600.00, 3.00, 0.0)),
-    DenseVector(Array(2400.00, 3.00, 0.0)),
-    DenseVector(Array(1416.00, 2.00, 0.0)),
-    DenseVector(Array(3000.00, 4.00, 0.0)),
-    DenseVector(Array(1985.00, 4.00, 0.0)),
-    DenseVector(Array(1534.00, 3.00, 0.0)),
-    DenseVector(Array(1427.00, 3.00, 0.0)),
-    DenseVector(Array(1380.00, 3.00, 0.0)),
-    DenseVector(Array(1494.00, 3.00, 0.0)),
-    DenseVector(Array(1940.00, 4.00, 0.0)),
-    DenseVector(Array(2000.00, 3.00, 0.0)),
-    DenseVector(Array(1890.00, 3.00, 0.0)),
-    DenseVector(Array(4478.00, 5.00, 0.0)),
-    DenseVector(Array(1268.00, 3.00, 0.0)),
-    DenseVector(Array(2300.00, 4.00, 0.0)),
-    DenseVector(Array(1320.00, 2.00, 0.0)),
-    DenseVector(Array(1236.00, 3.00, 0.0)),
-    DenseVector(Array(2609.00, 4.00, 0.0)),
-    DenseVector(Array(3031.00, 4.00, 0.0)),
-    DenseVector(Array(1767.00, 3.00, 0.0)),
-    DenseVector(Array(1888.00, 2.00, 0.0)),
-    DenseVector(Array(1604.00, 3.00, 0.0)),
-    DenseVector(Array(1962.00, 4.00, 0.0)),
-    DenseVector(Array(3890.00, 3.00, 0.0)),
-    DenseVector(Array(1100.00, 3.00, 0.0)),
-    DenseVector(Array(1458.00, 3.00, 0.0)),
-    DenseVector(Array(2526.00, 3.00, 0.0)),
-    DenseVector(Array(2200.00, 3.00, 0.0)),
-    DenseVector(Array(2637.00, 3.00, 0.0)),
-    DenseVector(Array(1839.00, 2.00, 0.0)),
-    DenseVector(Array(1000.00, 1.00, 0.0)),
-    DenseVector(Array(2040.00, 4.00, 0.0)),
-    DenseVector(Array(3137.00, 3.00, 0.0)),
-    DenseVector(Array(1811.00, 4.00, 0.0)),
-    DenseVector(Array(1437.00, 3.00, 0.0)),
-    DenseVector(Array(1239.00, 3.00, 0.0)),
-    DenseVector(Array(2132.00, 4.00, 0.0)),
-    DenseVector(Array(4215.00, 4.00, 0.0)),
-    DenseVector(Array(2162.00, 4.00, 0.0)),
-    DenseVector(Array(1664.00, 2.00, 0.0)),
-    DenseVector(Array(2238.00, 3.00, 0.0)),
-    DenseVector(Array(2567.00, 4.00, 0.0)),
-    DenseVector(Array(1200.00, 3.00, 0.0)),
-    DenseVector(Array(852.00, 2.00, 0.0)),
-    DenseVector(Array(1852.00, 4.00, 0.0)),
-    DenseVector(Array(1203.00, 3.00, 0.0))
+
+  case class Sample(
+      var slice: IndexedSeq[Int],
+      data: Vector
+  ) extends StreamEvent
+
+  val data: Seq[Sample] = List(
+    Sample(0 to 2, DenseVector(Array(2104.00, 3.00, 1.0))),
+    Sample(0 to 2, DenseVector(Array(1600.00, 3.00, 2.0))),
+    Sample(0 to 2, DenseVector(Array(2400.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1416.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3000.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1985.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1534.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1427.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1380.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1494.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1940.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2000.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1890.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(4478.00, 5.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1268.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2300.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1320.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1236.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2609.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3031.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1767.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1888.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1604.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1962.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3890.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1100.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1458.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2526.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2637.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1839.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1000.00, 1.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2040.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3137.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1811.00, 4.00, 20.0))),
+    Sample(0 to 2, DenseVector(Array(1437.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1239.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2132.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(4215.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2162.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1664.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2238.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2567.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(852.00, 2.00, 30.0))),
+    Sample(0 to 2, DenseVector(Array(1852.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1203.00, 3.00, 0.0)))
   )
+
 }
