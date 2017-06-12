@@ -55,6 +55,7 @@ class ExponentiallyWeightedMomentsEstimatorITSuite
     estimator.transform(stream).map(x=>x._2.toString).print()
     env.execute("Testing Exponentially Weighted Moments")
 
+    
   }
 }
 
