@@ -99,6 +99,7 @@ object MomentsEstimator {
       currMean(slice) :+= (delta :/ counters(slice))
       val delta2 = x :- currMean(slice)
       M2(slice) :+= (delta :*= delta2)
+
       this
     }
 
@@ -146,12 +147,12 @@ object MomentsEstimator {
 
   // ==================================== Operations ==========================================
 
-  implicit def fitNoOp[T] = {
-    new StreamFitOperation[MomentsEstimator, T]{
+  implicit def fitNoOp[E] = {
+    new StreamFitOperation[MomentsEstimator, E]{
       override def fit(
           instance: MomentsEstimator,
           fitParameters: ParameterMap,
-          input: DataStream[T])
+          input: DataStream[E])
         : Unit = {}
     }
   }

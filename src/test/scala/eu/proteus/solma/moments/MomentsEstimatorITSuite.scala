@@ -50,21 +50,19 @@ class MomentsEstimatorITSuite
     val result = meanAndVariance(m(::, *))
 
     val env = StreamExecutionEnvironment.getExecutionEnvironment
-    env.setParallelism(4)
-    env.setMaxParallelism(4)
+    env.setParallelism(1)
+    env.setMaxParallelism(1)
 
     val stream = env.fromCollection(data)
 
     val estimator = MomentsEstimator()
       .setFeaturesCount(3)
       .enableAggregation(true)
-
     val it: scala.Iterator[Moments] = estimator.transform(stream).map(x=>x._2).collect()
-
     val eps = 1E-5
     while (it.hasNext) {
       val elem = it.next
-      if (elem.counters(0) == 47.0) {
+      if (elem.counters(0) == data.length) {
         elem.mean(0) should be (result(0).mean +- eps)
         elem.mean(1) should be (result(1).mean +- eps)
         elem.mean(2) should be (result(2).mean +- eps)
@@ -84,8 +82,8 @@ class MomentsEstimatorITSuite
     val result = meanAndVariance(m(::, *))
 
     val env = StreamExecutionEnvironment.getExecutionEnvironment
-    env.setParallelism(4)
-    env.setMaxParallelism(4)
+    env.setParallelism(1)
+    env.setMaxParallelism(1)
 
     val stream = env.fromCollection(data2)
 
@@ -98,7 +96,7 @@ class MomentsEstimatorITSuite
     val eps = 1E-5
     while (it.hasNext) {
       val elem = it.next
-      if (elem.counters(0) == 47.0) {\\ Some modifications may be needed. Pleae check the comment below.
+      if (elem.counters(0) == data.length) {
         elem.mean(0) should be (result(0).mean +- eps)
         elem.mean(1) should be (result(1).mean +- eps)
         elem.mean(2) should be (result(2).mean +- eps)
@@ -170,6 +168,198 @@ object MomentsEstimatorITSuite {
     Sample(0 to 2, DenseVector(Array(1200.00, 3.00, 0.0))),
     Sample(0 to 2, DenseVector(Array(852.00, 2.00, 0.0))),
     Sample(0 to 2, DenseVector(Array(1852.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1268.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2300.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1320.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1236.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2609.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3031.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1767.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1888.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1604.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1962.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3890.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1100.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1458.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2526.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1268.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2300.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1320.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1236.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2609.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3031.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1767.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1888.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1604.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1962.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3890.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1100.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1458.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2526.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2637.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1839.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1000.00, 1.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2040.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3137.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1811.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1437.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1239.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2132.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(4215.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2162.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1664.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2238.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2567.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(852.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1852.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1268.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2300.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1320.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1236.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2609.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3031.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1767.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1888.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1604.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1962.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3890.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1100.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1458.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2526.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2637.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1839.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1000.00, 1.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2040.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3137.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1811.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1437.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1239.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2132.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(4215.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2162.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1664.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2238.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2567.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(852.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1852.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1268.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2300.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1320.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1236.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2609.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3031.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1767.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1888.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1604.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1962.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3890.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1100.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1458.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2526.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2637.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1839.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1000.00, 1.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2040.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3137.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1811.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1437.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1239.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2132.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(4215.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2162.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1664.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2238.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2567.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(852.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1852.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1268.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2300.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1320.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1236.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2609.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3031.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1767.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1888.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1604.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1962.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3890.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1100.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1458.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2526.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2637.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1839.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1000.00, 1.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2040.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3137.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1811.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1437.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1239.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2132.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(4215.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2162.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1664.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2238.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2567.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(852.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1852.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1268.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2300.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1320.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1236.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2609.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3031.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1767.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1888.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1604.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1962.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3890.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1100.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1458.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2526.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2637.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1839.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1000.00, 1.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2040.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3137.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1811.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1437.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1239.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2132.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(4215.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2162.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1664.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2238.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2567.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(852.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1852.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2637.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1839.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1000.00, 1.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2040.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(3137.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1811.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1437.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1239.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2132.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(4215.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2162.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1664.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2238.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(2567.00, 4.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1200.00, 3.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(852.00, 2.00, 0.0))),
+    Sample(0 to 2, DenseVector(Array(1852.00, 4.00, 0.0))),
     Sample(0 to 2, DenseVector(Array(1203.00, 3.00, 0.0)))
   )
 
@@ -221,7 +411,7 @@ object MomentsEstimatorITSuite {
     Sample(0 to 1, DenseVector(Array(852.00, 2.00))),
     Sample(0 to 1, DenseVector(Array(1852.00, 4.00))),
     Sample(0 to 1, DenseVector(Array(1203.00, 3.00))),
-    Sample(2 to 2, DenseVector(Array(0.00))),\\if the following Samples downward are not equal, the testing will fail. Is that right? Could you check please
+    Sample(2 to 2, DenseVector(Array(0.00))),
     Sample(2 to 2, DenseVector(Array(0.00))),
     Sample(2 to 2, DenseVector(Array(0.00))),
     Sample(2 to 2, DenseVector(Array(0.00))),

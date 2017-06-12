@@ -35,15 +35,15 @@ class ReservoirSamplingITSuite
 
   it should "perform reservoir sampling" in {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
-    env.setParallelism(4)
-    env.setMaxParallelism(4)
+    env.setParallelism(1)
+    env.setMaxParallelism(1)
 
     val stream = env.fromCollection(ReservoirSamplingITSuite.data)
 
     val transformer = SimpleReservoirSampling()
       .setReservoirSize(5)
 
-    transformer.transform(stream)
+    transformer.transform(stream).print()
 
     env.execute("reservoir sampling")
   }
