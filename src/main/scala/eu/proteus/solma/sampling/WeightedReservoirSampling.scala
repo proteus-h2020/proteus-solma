@@ -15,6 +15,8 @@ import scala.collection.mutable
 import scala.math.min
 import scala.reflect.ClassTag
 
+//---Author-----------
+// written by Wenjuan Wang, Department of Computing, Bournemouth University
 
 @Proteus
 class WeightedReservoirSampling extends  StreamTransformer[WeightedReservoirSampling]{
