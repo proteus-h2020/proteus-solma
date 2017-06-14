@@ -17,7 +17,8 @@ import scala.reflect.ClassTag
 import scala.util.Random
 
 
-
+//---Author-----------
+// written by Wenjuan Wang, Department of Computing, Bournemouth University
 
 @Proteus
 class AdaptiveReservoirSampling extends  StreamTransformer[AdaptiveReservoirSampling]{
