@@ -138,10 +138,11 @@ case class BagDictionary(bags : JMap[String, WordBag] = new JHashMap[String, Wor
 
   /**
    * Predict the class of a given vector.
+   * @param key The partition key associated with the prediction.
    * @param vector The vector to be compared.
    * @return A [[SAXPrediction]].
    */
-  def predict(vector: JMap[String, Long]) : SAXPrediction = {
+  def predict(key: Int, vector: JMap[String, Long]) : SAXPrediction = {
 
     if(this.bags.isEmpty){
       throw new UnsupportedOperationException("No classes available for prediction")
@@ -152,7 +153,7 @@ case class BagDictionary(bags : JMap[String, WordBag] = new JHashMap[String, Wor
       override def accept(wb: WordBag) : Unit = {
         val similarity = wb.similarity(vector)
         if(result.isEmpty || result.get.similarity < similarity){
-          result = Some(new SAXPrediction(wb.id.get, similarity))
+          result = Some(new SAXPrediction(key, wb.id.get, similarity))
         }
       }
     })
