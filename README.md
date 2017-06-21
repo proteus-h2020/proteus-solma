@@ -1,13 +1,15 @@
 # PROTEUS SOLMA Library
 Solma is  a scalable online machine learning algorithms (including classification, clustering, regression, ensemble algorithms, graph oriented algorithms, linear algebra operations, and anomaly and novelty detection) implemented on top of Apache Flink using the hybrid processing capabilities.
 
+[![Build Status](https://travis-ci.org/proteus-h2020/proteus-solma.svg?branch=develop)](https://travis-ci.org/proteus-h2020/proteus-solma)
+
 ### Usage
 - Clone proteus-engine [1] (if already cloned, execute ``` git pull origin proteus-dev ```)
 - From commandline go to above directory and execute ``` mvn clean install ```
 - Clone SOLMA library [2] (if already cloned, execute ``` git pull origin develop ```)
 - Move to above directory and execute ``` mvn install ```
 - To use SOLMA library, create Maven project (in your favorite IDE)
-- You can use sample pom file [4]. Please change project specific fields like ``` <mainClass> ``` to related value 
+- You can use sample pom file [4]. Please change project specific fields like ``` <mainClass> ``` to related value
 - For simple examples, please look at [unit tests](src/test/scala/eu/proteus/solma).
 - To generate jar with a given project, go to related directory (with command line) and execute ``` mvn clean install ```
 - Use jar file under ``` ./target/ ``` and use [3] to exetuce jar with flink
@@ -202,4 +204,3 @@ the `SAXDictionary`
 5. Connect the evaluation stream to pass first through the `SAX`
 algorithm and then through the `SAXDictionary` to obtain the
 predictions.
-
