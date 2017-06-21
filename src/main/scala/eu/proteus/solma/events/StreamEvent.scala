@@ -30,3 +30,13 @@ trait StreamEvent extends Serializable
   def slice: IndexedSeq[Int]
   def data: Vector
 }
+
+
+/**
+  * This is the base trait for modeling weighted stream events
+  * describing ingested samples.
+  */
+trait WeightedStreamEvent  extends StreamEvent
+{
+  def weight: Vector
+}
