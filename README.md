@@ -5,7 +5,8 @@ Solma is  a scalable online machine learning algorithms (including classificatio
 
 ### Usage
 - Clone proteus-engine [1] (if already cloned, execute ``` git pull origin proteus-dev ```)
-- From commandline go to above directory and execute ``` mvn clean install ```
+- Delete .m2 directory  ``` rm -rf ~/.m2/repository/* ```
+- From commandline go to above directory and execute ``` mvn clean install -Dmaven.test.skip=true -Dcheckstyle.skip=true ```
 - Clone SOLMA library [2] (if already cloned, execute ``` git pull origin develop ```)
 - Move to above directory and execute ``` mvn install ```
 - To use SOLMA library, create Maven project (in your favorite IDE)
