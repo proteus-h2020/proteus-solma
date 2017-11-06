@@ -40,7 +40,7 @@ trait StreamEstimator[Self] extends WithParameters with Serializable {
     * @tparam Training Type of the training data
     * @return
     */
-  def fit[Training](
+  def train[Training](
       training: DataStream[Training],
       fitParameters: ParameterMap = ParameterMap.Empty)(implicit
       fitOperation: StreamFitOperation[Self, Training]): Unit = {

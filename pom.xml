@@ -22,7 +22,7 @@
 
 
 	<groupId>eu.proteus</groupId>
-	<artifactId>proteus-solma_2.10</artifactId>
+	<artifactId>proteus-solma_2.11</artifactId>
 	<name>proteus-solma</name>
 	<version>0.1-SNAPSHOT</version>
 
@@ -32,19 +32,16 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.7</java.version>
-		<scala.macros.version>2.0.1</scala.macros.version>
-		<flink.forkCount>1C</flink.forkCount>
-		<flink.reuseForks>true</flink.reuseForks>
+		<scala.macros.version>2.1.1</scala.macros.version>
 		<log4j.configuration>log4j-test.properties</log4j.configuration>
-		<guava.version>18.0</guava.version>
 		<flink.version>1.4-SNAPSHOT</flink.version>
-		<scala.version>2.10.6</scala.version>
-		<scala.binary.version>2.10</scala.binary.version>
+		<scala.version>2.11.11</scala.version>
+		<scala.binary.version>2.11</scala.binary.version>
 		<metrics.version>3.1.0</metrics.version>
 		<junit.version>4.12</junit.version>
 		<mockito.version>1.10.19</mockito.version>
 		<powermock.version>1.6.5</powermock.version>
-		<breeze.version>0.12</breeze.version>
+		<breeze.version>0.13</breeze.version>
 		<log4j.configuration>log4j-test.properties</log4j.configuration>
 		<slf4j.version>1.7.7</slf4j.version>
 		<log4j.version>1.2.17</log4j.version>
@@ -222,7 +219,7 @@
 		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_${scala.binary.version}</artifactId>
-			<version>2.2.2</version>
+			<version>3.0.1</version>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
@@ -525,6 +522,7 @@
 			<plugin>
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
+				<version>3.2.2</version>
 				<executions>
 					<execution>
 						<goals>

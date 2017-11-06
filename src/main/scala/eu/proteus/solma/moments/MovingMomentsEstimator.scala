@@ -123,9 +123,9 @@ object MovingMomentsEstimator {
         val aggregateMoments=resultingParameters(AggregateMoments)
 
         val intermidiate=kstream.timeWindow(Time.milliseconds(windowLength),Time.milliseconds(windowTriggerInterval))
-          .aggregate(new AggregateFunction[(E, Long), ArrayBuffer[BreezeVector[Double] ], Moment[BreezeVector[Double]]]
-          (){override def add(value: (E, Long),  accumulator: ArrayBuffer[BreezeVector[Double] ])
-            : Unit ={accumulator+=value._1.data.asBreeze}
+          .aggregate(new AggregateFunction[(E, Long), ArrayBuffer[BreezeVector[Double]], Moment[BreezeVector[Double]]]
+          (){override def add(value: (E, Long),  accumulator: ArrayBuffer[BreezeVector[Double]])
+            : ArrayBuffer[BreezeVector[Double]] ={accumulator+=value._1.data.asBreeze}
 
             override def createAccumulator(): ArrayBuffer[BreezeVector[Double] ] = ArrayBuffer[BreezeVector[Double] ]()
 
@@ -142,8 +142,11 @@ object MovingMomentsEstimator {
                                                                   : ArrayBuffer[BreezeVector[Double] ]  = ???
         })
 
-        if(aggregateMoments)
+        /*if(aggregateMoments)
           {
+
+            // this code is not yet implemented
+
            intermidiate.timeWindowAll(Time.milliseconds(windowLength),Time.milliseconds(windowTriggerInterval))
                                                   .aggregate(new AggregateFunction[Moment[BreezeVector[Double]],
                                  ArrayBuffer[Moment[BreezeVector[Double]]], Moment[BreezeVector[Double] ] ]() {
@@ -169,9 +172,9 @@ object MovingMomentsEstimator {
             })
 
           }
-        else {
+        else {*/
           intermidiate
-        }
+        //}
         }
     }
   }

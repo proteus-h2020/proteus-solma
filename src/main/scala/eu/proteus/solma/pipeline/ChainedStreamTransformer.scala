@@ -65,7 +65,7 @@ object ChainedStreamTransformer {
           fitParameters: ParameterMap,
           input: DataStream[I]): Unit = {
         val intermediateResult = instance.left.transform(input, fitParameters)
-        instance.right.fit(intermediateResult, fitParameters)
+        instance.right.train(intermediateResult, fitParameters)
       }
     }
   }

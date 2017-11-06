@@ -59,9 +59,9 @@ object ChainedStreamPredictor {
           fitParameters: ParameterMap,
           input: DataStream[I])
         : Unit = {
-        instance.transformer.fit(input, fitParameters)
+        instance.transformer.train(input, fitParameters)
         val intermediateResult = instance.transformer.transform(input, fitParameters)
-        instance.predictor.fit(intermediateResult, fitParameters)
+        instance.predictor.train(intermediateResult, fitParameters)
       }
     }
   }
