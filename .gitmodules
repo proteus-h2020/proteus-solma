@@ -1,0 +1,3 @@
+[submodule "external/flink-parameter-server"]
+	path = external/flink-parameter-server
+	url = https://github.com/gaborhermann/flink-parameter-server.git
