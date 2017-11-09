@@ -12,4 +12,4 @@ else
 	exit 1
 fi
 cd external/flink-parameter-server
-sbt publishM2
+sbt clean publishM2
