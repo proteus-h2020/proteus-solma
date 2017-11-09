@@ -1,5 +1,6 @@
 #!/bin/bash
 
+git submodule update --init --recursive
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then 
 	sed -i 's/addSbtPlugin(\"com.eed3si9n\" \% \"sbt-assembly\" \% \"0.14.3\")/addSbtPlugin(\"com.eed3si9n\" \% \"sbt-assembly\" % \"0.14.5\")/g' external/flink-parameter-server/project/assembly.sbt
