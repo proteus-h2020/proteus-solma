@@ -2,4 +2,4 @@ language: scala
 jdk:
   - oraclejdk8
 sudo: false
-script: mvn clean verify
+before_install: sh scripts/build-flink-ps.sh
