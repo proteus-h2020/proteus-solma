@@ -17,678 +17,685 @@
   ~ limitations under the License.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
 
-	<groupId>eu.proteus</groupId>
-	<artifactId>proteus-solma_2.11</artifactId>
-	<name>proteus-solma</name>
-	<version>0.1-SNAPSHOT</version>
+    <groupId>eu.proteus</groupId>
+    <artifactId>proteus-solma_2.11</artifactId>
+    <name>proteus-solma</name>
+    <version>0.1-SNAPSHOT</version>
 
-	<packaging>jar</packaging>
+    <packaging>jar</packaging>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.7</java.version>
-		<scala.macros.version>2.1.1</scala.macros.version>
-		<log4j.configuration>log4j-test.properties</log4j.configuration>
-		<flink.version>1.4-SNAPSHOT</flink.version>
-		<scala.version>2.11.11</scala.version>
-		<scala.binary.version>2.11</scala.binary.version>
-		<metrics.version>3.1.0</metrics.version>
-		<junit.version>4.12</junit.version>
-		<mockito.version>1.10.19</mockito.version>
-		<powermock.version>1.6.5</powermock.version>
-		<breeze.version>0.13</breeze.version>
-		<log4j.configuration>log4j-test.properties</log4j.configuration>
-		<slf4j.version>1.7.7</slf4j.version>
-		<log4j.version>1.2.17</log4j.version>
-	</properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.7</java.version>
+        <scala.macros.version>2.1.1</scala.macros.version>
+        <log4j.configuration>log4j-test.properties</log4j.configuration>
+        <flink.version>1.4-SNAPSHOT</flink.version>
+        <scala.version>2.11.11</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
+        <metrics.version>3.1.0</metrics.version>
+        <junit.version>4.12</junit.version>
+        <mockito.version>1.10.19</mockito.version>
+        <powermock.version>1.6.5</powermock.version>
+        <breeze.version>0.13</breeze.version>
+        <log4j.configuration>log4j-test.properties</log4j.configuration>
+        <slf4j.version>1.7.7</slf4j.version>
+        <log4j.version>1.2.17</log4j.version>
+    </properties>
 
-	<repositories>
-		<repository>
-			<id>apache.snapshots</id>
-			<name>Apache Development Snapshot Repository</name>
-			<url>https://repository.apache.org/content/repositories/snapshots/</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>apache.snapshots</id>
+            <name>Apache Development Snapshot Repository</name>
+            <url>https://repository.apache.org/content/repositories/snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
-	<distributionManagement>
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-		<repository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
-	<dependencies>
+    <dependencies>
 
-		<!-- core dependencies -->
+        <!-- core dependencies -->
 
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-core</artifactId>
-			<version>1.1.3</version>
-		</dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>1.1.3</version>
+        </dependency>
 
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.1.3</version>
-		</dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.1.3</version>
+        </dependency>
 
-		<!-- Add the log4j -> sfl4j (-> logback) bridge into the classpath
-		 Hadoop is logging to log4j! -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>log4j-over-slf4j</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
+        <!-- Add the log4j -> sfl4j (-> logback) bridge into the classpath
+         Hadoop is logging to log4j! -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-streaming-scala_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-scala_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-scala_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-scala_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-ml_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-ml_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-streaming-contrib_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-contrib_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-ml_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-ml_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-		<dependency>
-			<groupId>org.scalanlp</groupId>
-			<artifactId>breeze_${scala.binary.version}</artifactId>
-			<version>${breeze.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.scalanlp</groupId>
+            <artifactId>breeze_${scala.binary.version}</artifactId>
+            <version>${breeze.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.github.fommil.netlib</groupId>
-			<artifactId>all</artifactId>
-			<version>1.1.2</version>
-			<type>pom</type>
-		</dependency>
+        <dependency>
+            <groupId>com.github.fommil.netlib</groupId>
+            <artifactId>all</artifactId>
+            <version>1.1.2</version>
+            <type>pom</type>
+        </dependency>
 
-		<dependency>
-			<groupId>org.scala-lang</groupId>
-			<artifactId>scala-library</artifactId>
-			<version>${scala.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.scala-lang</groupId>
-			<artifactId>scala-reflect</artifactId>
-			<version>${scala.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.scala-lang</groupId>
-			<artifactId>scala-compiler</artifactId>
-			<version>${scala.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-math3</artifactId>
-			<version>3.5</version>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.5</version>
+        </dependency>
 
-		<dependency>
-			<groupId>hu.sztaki.ilab</groupId>
-			<artifactId>flink-ps_2.11</artifactId>
-			<version>0.1.0</version>
-		</dependency>
-
-
-		<!-- test dependencies -->
-
-		<dependency>
-			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_${scala.binary.version}</artifactId>
-			<version>3.0.1</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-clients_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-test-utils_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>hu.sztaki.ilab</groupId>
+            <artifactId>flink-ps_2.11</artifactId>
+            <version>0.1.0</version>
+        </dependency>
 
 
-		<!-- root dependencies -->
+        <!-- test dependencies -->
 
-		<dependency>
-			<groupId>com.google.code.findbugs</groupId>
-			<artifactId>jsr305</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>3.0.1</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-	</dependencies>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-clients_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-	<dependencyManagement>
-		<dependencies>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-test-utils_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-			<!-- This manages the 'javax.annotation' annotations (JSR305) -->
-			<dependency>
-				<groupId>com.google.code.findbugs</groupId>
-				<artifactId>jsr305</artifactId>
-				<version>1.3.9</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-lang3</artifactId>
-				<version>3.3.2</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.reflections</groupId>
-				<artifactId>reflections</artifactId>
-				<version>0.9.10</version>
-				<scope>test</scope>
-			</dependency>
-
-		</dependencies>
-
-	</dependencyManagement>
-
-	<profiles>
-		<profile>
-			<id>windows</id>
-			<activation>
-				<os>
-					<family>windows</family>
-				</os>
-			</activation>
-			<properties>
-				<suffix.test>"(?&lt;!(IT|Integration))(Test|Suite|Case)"</suffix.test>
-				<suffix.it>"(IT|Integration)(Test|Suite|Case)"</suffix.it>
-			</properties>
-		</profile>
-		<profile>
-			<id>default</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<properties>
-				<suffix.test>(?&lt;!(IT|Integration))(Test|Suite|Case)</suffix.test>
-				<suffix.it>(IT|Integration)(Test|Suite|Case)</suffix.it>
-			</properties>
-		</profile>
-		<profile>
-			<!-- Profile for packaging correct JAR files -->
-			<id>build-jar</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<dependencies>
-				<dependency>
-					<groupId>org.apache.flink</groupId>
-					<artifactId>flink-scala_${scala.binary.version}</artifactId>
-					<version>${flink.version}</version>
-					<scope>provided</scope>
-				</dependency>
-				<dependency>
-					<groupId>org.apache.flink</groupId>
-					<artifactId>flink-streaming-scala_${scala.binary.version}</artifactId>
-					<version>${flink.version}</version>
-					<scope>provided</scope>
-				</dependency>
-				<dependency>
-					<groupId>org.apache.flink</groupId>
-					<artifactId>flink-clients_${scala.binary.version}</artifactId>
-					<version>${flink.version}</version>
-					<scope>provided</scope>
-				</dependency>
-				<dependency>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-					<version>${slf4j.version}</version>
-					<scope>provided</scope>
-				</dependency>
-				<dependency>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
-					<version>${log4j.version}</version>
-					<scope>provided</scope>
-				</dependency>
-
-			</dependencies>
-
-			<properties>
-				<suffix.test>(?&lt;!(IT|Integration))(Test|Suite|Case)</suffix.test>
-				<suffix.it>(IT|Integration)(Test|Suite|Case)</suffix.it>
-			</properties>
-
-			<build>
-				<plugins>
-					<!-- disable the exclusion rules -->
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-shade-plugin</artifactId>
-						<version>2.4.1</version>
-						<executions>
-							<execution>
-								<phase>package</phase>
-								<goals>
-									<goal>shade</goal>
-								</goals>
-								<configuration>
-									<artifactSet>
-										<excludes combine.self="override"></excludes>
-									</artifactSet>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
-
-	<build>
-		<plugins>
+        <dependency>
+            <groupId>org.scalacheck</groupId>
+            <artifactId>scalacheck_2.11</artifactId>
+            <version>1.13.4</version>
+            <scope>test</scope>
+        </dependency>
 
 
-			<plugin>
-				<artifactId>exec-maven-plugin</artifactId>
-				<groupId>org.codehaus.mojo</groupId>
-				<executions>
-					<execution>
-						<id>Publish Parameter Server</id>
-						<phase>generate-sources</phase>
-							<goals>
-								<goal>exec</goal>
-							</goals>
-							<configuration>
-								<executable>${basedir}/scripts/build-flink-ps.sh</executable>
-							</configuration>
-					</execution>
-				</executions>
-			</plugin>
+        <!-- root dependencies -->
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- This manages the 'javax.annotation' annotations (JSR305) -->
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>1.3.9</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.3.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>0.9.10</version>
+                <scope>test</scope>
+            </dependency>
+
+        </dependencies>
+
+    </dependencyManagement>
+
+    <profiles>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <suffix.test>"(?&lt;!(IT|Integration))(Test|Suite|Case)"</suffix.test>
+                <suffix.it>"(IT|Integration)(Test|Suite|Case)"</suffix.it>
+            </properties>
+        </profile>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <suffix.test>(?&lt;!(IT|Integration))(Test|Suite|Case)</suffix.test>
+                <suffix.it>(IT|Integration)(Test|Suite|Case)</suffix.it>
+            </properties>
+        </profile>
+        <profile>
+            <!-- Profile for packaging correct JAR files -->
+            <id>build-jar</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-scala_${scala.binary.version}</artifactId>
+                    <version>${flink.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-streaming-scala_${scala.binary.version}</artifactId>
+                    <version>${flink.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.flink</groupId>
+                    <artifactId>flink-clients_${scala.binary.version}</artifactId>
+                    <version>${flink.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <version>${slf4j.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                    <version>${log4j.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+
+            </dependencies>
+
+            <properties>
+                <suffix.test>(?&lt;!(IT|Integration))(Test|Suite|Case)</suffix.test>
+                <suffix.it>(IT|Integration)(Test|Suite|Case)</suffix.it>
+            </properties>
+
+            <build>
+                <plugins>
+                    <!-- disable the exclusion rules -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <version>2.4.1</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>shade</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactSet>
+                                        <excludes combine.self="override"></excludes>
+                                    </artifactSet>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
 
 
-			<!-- We use the maven-shade plugin to create a fat jar that contains all dependencies
-			except flink and it's transitive dependencies. The resulting fat-jar can be executed
-			on a cluster. Change the value of Program-Class if your program entry point changes. -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.4.1</version>
-				<executions>
-					<!-- Run shade goal on package phase -->
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<artifactSet>
-								<excludes>
-									<!-- This list contains all dependencies of flink-dist
-									Everything else will be packaged into the fat-jar
-									-->
-									<exclude>org.apache.flink:flink-annotations</exclude>
-									<exclude>org.apache.flink:flink-shaded-hadoop2</exclude>
-									<exclude>org.apache.flink:flink-shaded-curator-recipes</exclude>
-									<exclude>org.apache.flink:flink-core</exclude>
-									<exclude>org.apache.flink:flink-java</exclude>
-									<exclude>org.apache.flink:flink-scala_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-runtime_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-optimizer_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-clients_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-avro_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-examples-batch_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-examples-streaming_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-streaming-java_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-streaming-scala_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-scala-shell_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-python</exclude>
-									<exclude>org.apache.flink:flink-metrics-core</exclude>
-									<exclude>org.apache.flink:flink-metrics-jmx</exclude>
-									<exclude>org.apache.flink:flink-test-utils_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-tests_${scala.binary.version}</exclude>
-									<exclude>org.apache.flink:flink-statebackend-rocksdb_${scala.binary.version}</exclude>
-
-									<!-- Also exclude very big transitive dependencies of Flink
-									WARNING: You have to remove these excludes if your code relies on other
-									versions of these dependencies.
-									-->
-
-									<exclude>log4j:log4j</exclude>
-									<exclude>org.scala-lang:scala-library</exclude>
-									<exclude>org.scala-lang:scala-compiler</exclude>
-									<exclude>org.scala-lang:scala-reflect</exclude>
-									<exclude>com.data-artisans:flakka-actor_*</exclude>
-									<exclude>com.data-artisans:flakka-remote_*</exclude>
-									<exclude>com.data-artisans:flakka-slf4j_*</exclude>
-									<exclude>com.data-artisans:frocksdbjni</exclude>
-									<exclude>io.netty:netty-all</exclude>
-									<exclude>io.netty:netty</exclude>
-									<exclude>com.esotericsoftware.kryo:kryo</exclude>
-									<exclude>com.esotericsoftware.minlog:minlog</exclude>
-									<exclude>commons-fileupload:commons-fileupload</exclude>
-									<exclude>org.apache.avro:avro</exclude>
-									<exclude>commons-collections:commons-collections</exclude>
-									<exclude>com.thoughtworks.paranamer:paranamer</exclude>
-									<exclude>org.xerial.snappy:snappy-java</exclude>
-									<exclude>org.apache.commons:commons-compress</exclude>
-									<exclude>org.tukaani:xz</exclude>
-									<exclude>org.objenesis:objenesis</exclude>
-									<exclude>com.twitter:chill_*</exclude>
-									<exclude>com.twitter:chill-java</exclude>
-									<exclude>commons-lang:commons-lang</exclude>
-									<exclude>junit:junit</exclude>
-									<exclude>org.apache.commons:commons-lang3</exclude>
-									<exclude>org.slf4j:slf4j-api</exclude>
-									<exclude>org.slf4j:slf4j-log4j12</exclude>
-									<exclude>log4j:log4j</exclude>
-									<exclude>org.apache.commons:commons-math</exclude>
-									<exclude>org.apache.sling:org.apache.sling.commons.json</exclude>
-									<exclude>commons-logging:commons-logging</exclude>
-									<exclude>commons-codec:commons-codec</exclude>
-									<exclude>com.fasterxml.jackson.core:jackson-core</exclude>
-									<exclude>com.fasterxml.jackson.core:jackson-databind</exclude>
-									<exclude>com.fasterxml.jackson.core:jackson-annotations</exclude>
-									<exclude>stax:stax-api</exclude>
-									<exclude>com.typesafe:config</exclude>
-									<exclude>org.uncommons.maths:uncommons-maths</exclude>
-									<exclude>com.github.scopt:scopt_*</exclude>
-									<exclude>commons-io:commons-io</exclude>
-									<exclude>commons-cli:commons-cli</exclude>
-								</excludes>
-							</artifactSet>
-							<filters>
-								<filter>
-									<artifact>org.apache.flink:*</artifact>
-									<excludes>
-										<!-- exclude shaded google but include shaded curator -->
-										<exclude>org/apache/flink/shaded/com/**</exclude>
-										<exclude>web-docs/**</exclude>
-									</excludes>
-								</filter>
-								<filter>
-									<!-- Do not copy the signatures in the META-INF folder.
-									Otherwise, this might cause SecurityExceptions when using the JAR. -->
-									<artifact>*:*</artifact>
-									<excludes>
-										<exclude>META-INF/*.SF</exclude>
-										<exclude>META-INF/*.DSA</exclude>
-										<exclude>META-INF/*.RSA</exclude>
-									</excludes>
-								</filter>
-							</filters>
-
-							<createDependencyReducedPom>false</createDependencyReducedPom>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+            <plugin>
+                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <executions>
+                    <execution>
+                        <id>Publish Parameter Server</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${basedir}/scripts/build-flink-ps.sh</executable>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
 
-			<plugin>
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.2</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>compile</goal>
-							<goal>testCompile</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+            <!-- We use the maven-shade plugin to create a fat jar that contains all dependencies
+            except flink and it's transitive dependencies. The resulting fat-jar can be executed
+            on a cluster. Change the value of Program-Class if your program entry point changes. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.1</version>
+                <executions>
+                    <!-- Run shade goal on package phase -->
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <excludes>
+                                    <!-- This list contains all dependencies of flink-dist
+                                    Everything else will be packaged into the fat-jar
+                                    -->
+                                    <exclude>org.apache.flink:flink-annotations</exclude>
+                                    <exclude>org.apache.flink:flink-shaded-hadoop2</exclude>
+                                    <exclude>org.apache.flink:flink-shaded-curator-recipes</exclude>
+                                    <exclude>org.apache.flink:flink-core</exclude>
+                                    <exclude>org.apache.flink:flink-java</exclude>
+                                    <exclude>org.apache.flink:flink-scala_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-runtime_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-optimizer_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-clients_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-avro_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-examples-batch_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-examples-streaming_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-streaming-java_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-streaming-scala_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-scala-shell_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-python</exclude>
+                                    <exclude>org.apache.flink:flink-metrics-core</exclude>
+                                    <exclude>org.apache.flink:flink-metrics-jmx</exclude>
+                                    <exclude>org.apache.flink:flink-test-utils_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-tests_${scala.binary.version}</exclude>
+                                    <exclude>org.apache.flink:flink-statebackend-rocksdb_${scala.binary.version}</exclude>
 
-			<plugin>
-				<groupId>org.scalatest</groupId>
-				<artifactId>scalatest-maven-plugin</artifactId>
-				<version>1.0</version>
-				<configuration>
-					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-					<stdout>W</stdout> <!-- Skip coloring output -->
-				</configuration>
-				<executions>
-					<execution>
-						<id>scala-test</id>
-						<goals>
-							<goal>test</goal>
-						</goals>
-						<configuration>
-							<suffixes>${suffix.test}</suffixes>
-							<argLine>-Xms256m -Xmx800m -Dlog4j.configuration=${log4j.configuration} -Dlog.dir=${log.dir} -Dmvn.forkNumber=1 -XX:-UseGCOverheadLimit</argLine>
-						</configuration>
-					</execution>
-					<execution>
-						<id>integration-test</id>
-						<phase>integration-test</phase>
-						<goals>
-							<goal>test</goal>
-						</goals>
-						<configuration>
-							<suffixes>${suffix.it}</suffixes>
-							<argLine>-Xms256m -Xmx800m -Dlog4j.configuration=${log4j.configuration} -Dlog.dir=${log.dir} -Dmvn.forkNumber=1 -XX:-UseGCOverheadLimit</argLine>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+                                    <!-- Also exclude very big transitive dependencies of Flink
+                                    WARNING: You have to remove these excludes if your code relies on other
+                                    versions of these dependencies.
+                                    -->
 
-			<!-- Scala Code Style, most of the configuration done via plugin management -->
-			<plugin>
-				<groupId>org.scalastyle</groupId>
-				<artifactId>scalastyle-maven-plugin</artifactId>
-				<version>0.8.0</version>
-				<configuration>
-					<configLocation>${project.basedir}/tools/maven/checkstyle.xml</configLocation>
-					<failOnViolation>true</failOnViolation>
-					<sourceDirectory>${project.basedir}/src/main/scala</sourceDirectory>
-					<testSourceDirectory>${project.basedir}/src/test/scala</testSourceDirectory>
-					<includeTestSourceDirectory>true</includeTestSourceDirectory>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>test-compile</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+                                    <exclude>log4j:log4j</exclude>
+                                    <exclude>org.scala-lang:scala-library</exclude>
+                                    <exclude>org.scala-lang:scala-compiler</exclude>
+                                    <exclude>org.scala-lang:scala-reflect</exclude>
+                                    <exclude>com.data-artisans:flakka-actor_*</exclude>
+                                    <exclude>com.data-artisans:flakka-remote_*</exclude>
+                                    <exclude>com.data-artisans:flakka-slf4j_*</exclude>
+                                    <exclude>com.data-artisans:frocksdbjni</exclude>
+                                    <exclude>io.netty:netty-all</exclude>
+                                    <exclude>io.netty:netty</exclude>
+                                    <exclude>com.esotericsoftware.kryo:kryo</exclude>
+                                    <exclude>com.esotericsoftware.minlog:minlog</exclude>
+                                    <exclude>commons-fileupload:commons-fileupload</exclude>
+                                    <exclude>org.apache.avro:avro</exclude>
+                                    <exclude>commons-collections:commons-collections</exclude>
+                                    <exclude>com.thoughtworks.paranamer:paranamer</exclude>
+                                    <exclude>org.xerial.snappy:snappy-java</exclude>
+                                    <exclude>org.apache.commons:commons-compress</exclude>
+                                    <exclude>org.tukaani:xz</exclude>
+                                    <exclude>org.objenesis:objenesis</exclude>
+                                    <exclude>com.twitter:chill_*</exclude>
+                                    <exclude>com.twitter:chill-java</exclude>
+                                    <exclude>commons-lang:commons-lang</exclude>
+                                    <exclude>junit:junit</exclude>
+                                    <exclude>org.apache.commons:commons-lang3</exclude>
+                                    <exclude>org.slf4j:slf4j-api</exclude>
+                                    <exclude>org.slf4j:slf4j-log4j12</exclude>
+                                    <exclude>log4j:log4j</exclude>
+                                    <exclude>org.apache.commons:commons-math</exclude>
+                                    <exclude>org.apache.sling:org.apache.sling.commons.json</exclude>
+                                    <exclude>commons-logging:commons-logging</exclude>
+                                    <exclude>commons-codec:commons-codec</exclude>
+                                    <exclude>com.fasterxml.jackson.core:jackson-core</exclude>
+                                    <exclude>com.fasterxml.jackson.core:jackson-databind</exclude>
+                                    <exclude>com.fasterxml.jackson.core:jackson-annotations</exclude>
+                                    <exclude>stax:stax-api</exclude>
+                                    <exclude>com.typesafe:config</exclude>
+                                    <exclude>org.uncommons.maths:uncommons-maths</exclude>
+                                    <exclude>com.github.scopt:scopt_*</exclude>
+                                    <exclude>commons-io:commons-io</exclude>
+                                    <exclude>commons-cli:commons-cli</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>org.apache.flink:*</artifact>
+                                    <excludes>
+                                        <!-- exclude shaded google but include shaded curator -->
+                                        <exclude>org/apache/flink/shaded/com/**</exclude>
+                                        <exclude>web-docs/**</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <!-- Do not copy the signatures in the META-INF folder.
+                                    Otherwise, this might cause SecurityExceptions when using the JAR. -->
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
-			<!-- Eclipse Integration -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-eclipse-plugin</artifactId>
-				<version>2.8</version>
-				<configuration>
-					<downloadSources>true</downloadSources>
-					<projectnatures>
-						<projectnature>org.scala-ide.sdt.core.scalanature</projectnature>
-						<projectnature>org.eclipse.jdt.core.javanature</projectnature>
-					</projectnatures>
-					<buildcommands>
-						<buildcommand>org.scala-ide.sdt.core.scalabuilder</buildcommand>
-					</buildcommands>
-					<classpathContainers>
-						<classpathContainer>org.scala-ide.sdt.launching.SCALA_CONTAINER
-						</classpathContainer>
-						<classpathContainer>org.eclipse.jdt.launching.JRE_CONTAINER
-						</classpathContainer>
-					</classpathContainers>
-					<excludes>
-						<exclude>org.scala-lang:scala-library</exclude>
-						<exclude>org.scala-lang:scala-compiler</exclude>
-					</excludes>
-					<sourceIncludes>
-						<sourceInclude>**/*.scala</sourceInclude>
-						<sourceInclude>**/*.java</sourceInclude>
-					</sourceIncludes>
-				</configuration>
-			</plugin>
 
-			<!-- Adding scala source directories to build path -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.7</version>
-				<executions>
-					<!-- Add src/main/scala to eclipse build path -->
-					<execution>
-						<id>add-source</id>
-						<phase>generate-sources</phase>
-						<goals>
-							<goal>add-source</goal>
-						</goals>
-						<configuration>
-							<sources>
-								<source>src/main/scala</source>
-							</sources>
-						</configuration>
-					</execution>
-					<!-- Add src/test/scala to eclipse build path -->
-					<execution>
-						<id>add-test-source</id>
-						<phase>generate-test-sources</phase>
-						<goals>
-							<goal>add-test-source</goal>
-						</goals>
-						<configuration>
-							<sources>
-								<source>src/test/scala</source>
-							</sources>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>3.2.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
-		</plugins>
-	</build>
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>1.0</version>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <stdout>W</stdout> <!-- Skip coloring output -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>scala-test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <suffixes>${suffix.test}</suffixes>
+                            <argLine>-Xms256m -Xmx800m -Dlog4j.configuration=${log4j.configuration} -Dlog.dir=${log.dir} -Dmvn.forkNumber=1 -XX:-UseGCOverheadLimit</argLine>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>integration-test</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <suffixes>${suffix.it}</suffixes>
+                            <argLine>-Xms256m -Xmx800m -Dlog4j.configuration=${log4j.configuration} -Dlog.dir=${log.dir} -Dmvn.forkNumber=1 -XX:-UseGCOverheadLimit</argLine>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Scala Code Style, most of the configuration done via plugin management -->
+            <!--plugin>
+                <groupId>org.scalastyle</groupId>
+                <artifactId>scalastyle-maven-plugin</artifactId>
+                <version>0.8.0</version>
+                <configuration>
+                    <configLocation>${project.basedir}/tools/maven/checkstyle.xml</configLocation>
+                    <failOnViolation>true</failOnViolation>
+                    <sourceDirectory>${project.basedir}/src/main/scala</sourceDirectory>
+                    <testSourceDirectory>${project.basedir}/src/test/scala</testSourceDirectory>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin-->
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+
+            <!-- Eclipse Integration -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-eclipse-plugin</artifactId>
+                <version>2.8</version>
+                <configuration>
+                    <downloadSources>true</downloadSources>
+                    <projectnatures>
+                        <projectnature>org.scala-ide.sdt.core.scalanature</projectnature>
+                        <projectnature>org.eclipse.jdt.core.javanature</projectnature>
+                    </projectnatures>
+                    <buildcommands>
+                        <buildcommand>org.scala-ide.sdt.core.scalabuilder</buildcommand>
+                    </buildcommands>
+                    <classpathContainers>
+                        <classpathContainer>org.scala-ide.sdt.launching.SCALA_CONTAINER
+                        </classpathContainer>
+                        <classpathContainer>org.eclipse.jdt.launching.JRE_CONTAINER
+                        </classpathContainer>
+                    </classpathContainers>
+                    <excludes>
+                        <exclude>org.scala-lang:scala-library</exclude>
+                        <exclude>org.scala-lang:scala-compiler</exclude>
+                    </excludes>
+                    <sourceIncludes>
+                        <sourceInclude>**/*.scala</sourceInclude>
+                        <sourceInclude>**/*.java</sourceInclude>
+                    </sourceIncludes>
+                </configuration>
+            </plugin>
+
+            <!-- Adding scala source directories to build path -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <!-- Add src/main/scala to eclipse build path -->
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/scala</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <!-- Add src/test/scala to eclipse build path -->
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/test/scala</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
 </project>

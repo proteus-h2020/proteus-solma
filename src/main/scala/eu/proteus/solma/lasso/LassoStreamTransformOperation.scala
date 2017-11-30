@@ -16,6 +16,8 @@
 
 package eu.proteus.solma.lasso
 
+import eu.proteus.solma.lasso.Lasso.LassoParam
+import eu.proteus.solma.lasso.algorithm.LassoBasicAlgorithm
 import eu.proteus.solma.pipeline.TransformDataStreamOperation
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala.DataStream
@@ -23,12 +25,24 @@ import org.apache.flink.api.scala._
 
 
 class LassoStreamTransformOperation[T <: Lasso.OptionLabeledVector]
-    extends TransformDataStreamOperation[Lasso, (T, Int), (Double, Int)]{
+    extends TransformDataStreamOperation[Lasso, Lasso.OptionLabeledVector, Option[Double]]{
 
     override def transformDataStream(instance: Lasso,
                                      transformParameters: ParameterMap,
-                                     input: DataStream[(T, Int)]): DataStream[(Double, Int)] = {
-      input.map(x => (0.0, x._2))
+                                     input: DataStream[Lasso.OptionLabeledVector]): DataStream[Option[Double]] = {
+      val output = LassoParameterServer.transformLasso(None)(input, workerParallelism = 3,
+        psParallelism = 3, lassoMethod = LassoBasicAlgorithm.buildLasso(), pullLimit = 10000,
+        featureCount = 500/*LassoParameterServerTest.featureCount*/, rangePartitioning = true, iterationWaitTime = 20000
+      )
+
+      def f (x: Either[Double, (Int, LassoParam)]): Option[Double] = {
+        x match {
+          case Left(label) => Some(label)
+          case _ => None
+        }
+      }
+
+      output.map(x => f(x))
     }
 
   }
