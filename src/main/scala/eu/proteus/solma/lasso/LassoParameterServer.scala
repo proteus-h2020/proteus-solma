@@ -16,15 +16,15 @@
 
 package eu.proteus.solma.lasso
 
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+
 import breeze.linalg._
 import hu.sztaki.ilab.ps.entities.{PSToWorker, Pull, Push, WorkerToPS}
 import hu.sztaki.ilab.ps.server.{RangePSLogicWithClose, SimplePSLogicWithClose}
 import hu.sztaki.ilab.ps.{FlinkParameterServer, ParameterServerClient, WorkerLogic}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.scala._
-
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 import eu.proteus.solma.lasso.algorithm.LassoAlgorithm
 import eu.proteus.solma.lasso.Lasso.{LassoModel, LassoParam, OptionLabeledVector}

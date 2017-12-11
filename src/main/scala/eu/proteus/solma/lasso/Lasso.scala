@@ -17,8 +17,8 @@
 package eu.proteus.solma.lasso
 
 import breeze.linalg.{DenseMatrix, DenseVector}
-import eu.proteus.solma.pipeline.StreamPredictor
-import org.apache.flink.ml.pipeline.Estimator
+import eu.proteus.solma.pipeline.{StreamPredictor, StreamEstimator}
+import eu.proteus.solma.events.StreamEvent
 import org.slf4j.Logger
 
 
@@ -39,16 +39,16 @@ object Lasso {
     new LassoFitOperation[T]
   }
 
-  implicit def predictImplementation[K <: Lasso.OptionLabeledVector] = {
+  implicit def predictImplementation[K <: StreamEvent] = {
     new LassoPredictOperation[K]
   }
 
-  implicit def transformImplementation[T <: Lasso.OptionLabeledVector] = {
+  implicit def transformImplementation[T <: StreamEvent] = {
     new LassoStreamTransformOperation[T]
   }
 }
 
-class Lasso extends StreamPredictor[Lasso] with Estimator[Lasso]{
+class Lasso extends StreamPredictor[Lasso] with StreamEstimator[Lasso]{
   import eu.proteus.solma.lasso.Lasso.Log
 
   /**

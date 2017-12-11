@@ -16,21 +16,28 @@
 
 package eu.proteus.solma.lasso
 
-import eu.proteus.solma.lasso.Lasso.LassoParam
+import eu.proteus.solma.lasso.Lasso.{LassoParam, OptionLabeledVector}
 import eu.proteus.solma.lasso.algorithm.LassoBasicAlgorithm
 import eu.proteus.solma.pipeline.TransformDataStreamOperation
+import eu.proteus.solma.events.StreamEvent
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.api.scala._
+import breeze.linalg.DenseVector
 
 
-class LassoStreamTransformOperation[T <: Lasso.OptionLabeledVector]
-    extends TransformDataStreamOperation[Lasso, Lasso.OptionLabeledVector, Option[Double]]{
+class LassoStreamTransformOperation[T <: StreamEvent]
+    extends TransformDataStreamOperation[Lasso, StreamEvent, Option[Double]]{
 
     override def transformDataStream(instance: Lasso,
                                      transformParameters: ParameterMap,
-                                     input: DataStream[Lasso.OptionLabeledVector]): DataStream[Option[Double]] = {
-      val output = LassoParameterServer.transformLasso(None)(input, workerParallelism = 3,
+                                     input: DataStream[StreamEvent]): DataStream[Option[Double]] = {
+      def eventToLabelVector(event: StreamEvent): OptionLabeledVector = {
+        Right(new DenseVector(event.data.toArray.map(x => x._2)))
+      }
+
+      val transSource = input.map(x => eventToLabelVector(x))
+      val output = LassoParameterServer.transformLasso(None)(transSource, workerParallelism = 3,
         psParallelism = 3, lassoMethod = LassoBasicAlgorithm.buildLasso(), pullLimit = 10000,
         featureCount = 500/*LassoParameterServerTest.featureCount*/, rangePartitioning = true, iterationWaitTime = 20000
       )

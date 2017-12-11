@@ -17,11 +17,12 @@
 package eu.proteus.solma.lasso
 
 import eu.proteus.solma.pipeline.PredictDataStreamOperation
+import eu.proteus.solma.events.StreamEvent
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala.DataStream
 import org.apache.flink.api.scala._
 
-class LassoPredictOperation[T <: Lasso.OptionLabeledVector]
+class LassoPredictOperation[T <: StreamEvent]
   extends PredictDataStreamOperation[Lasso, (T, Int), Double]{
 
   /** Calculates the predictions for all elements in the [[DataStream]] input
