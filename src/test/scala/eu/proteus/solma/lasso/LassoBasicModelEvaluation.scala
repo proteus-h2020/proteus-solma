@@ -16,7 +16,7 @@
 
 package eu.proteus.solma.lasso
 
-import breeze.linalg.{DenseVector, SparseVector}
+import breeze.linalg.Vector
 import breeze.numerics.abs
 import eu.proteus.solma.lasso.Lasso.LassoModel
 import eu.proteus.solma.lasso.algorithm.LassoBasicAlgorithm
@@ -30,7 +30,7 @@ object LassoBasicModelEvaluation {
 
 
   def accuracy(model: LassoModel,
-               testLines: Traversable[(DenseVector[Double], Option[Double])],
+               testLines: Traversable[(Vector[Double], Option[Double])],
                featureCount: Int,
                pac: LassoBasicAlgorithm): Double = {
 
@@ -42,7 +42,7 @@ object LassoBasicModelEvaluation {
         val predicted = pac.predict(Right(vector), model)
         sumDiffs += abs(predicted - real)
         cnt += 1
-      case _ => throw new IllegalStateException("Labels shold not be missing.")
+      case _ => throw new IllegalStateException("Labels should not be missing.")
     }
     }
     val percent = sumDiffs / cnt

@@ -143,15 +143,6 @@ object LassoParameterServer {
           // buffer to store the already received parameters
           val waitingValues = new ArrayBuffer[(Int, Param)]()
 
-          /* TO COMPLETE WITH LASSO DETAILS*/
-
-          /*(0 until vector.activeSize).map(offset => vector.indexAt(offset))
-            .foreach(k => {
-              paramWaitingQueue.getOrElseUpdate(k,
-                mutable.Queue[(Vec, ArrayBuffer[(Int, Param)])]())
-                .enqueue((data, waitingValues))
-              ps.pull(k)
-            })*/
           paramWaitingQueue.getOrElseUpdate(0,
             mutable.Queue[(Vec, ArrayBuffer[(Int, Param)])]())
             .enqueue((data, waitingValues))
@@ -240,8 +231,8 @@ object LassoParameterServer {
   private abstract class OptionLabeledVectorWithIdImpl[Label, Id]
     extends OptionLabeledVectorWithId[OptionLabeledVector, Id, Label] {
     override def vector(v: OptionLabeledVector): DenseVector[Double] = v match {
-      case Left((vec, _)) => vec
-      case Right(vec) => vec
+      case Left((vec, _)) => vec.toDenseVector
+      case Right(vec) => vec.toDenseVector
     }
 
     override def label(v: OptionLabeledVector): Option[Double] = v match {
@@ -252,7 +243,7 @@ object LassoParameterServer {
 
   private implicit def optionLabeledEv: OptionLabeledVectorWithId[OptionLabeledVector, Int, Double] =
     new OptionLabeledVectorWithIdImpl [Double, Int] {
-      override def id(v: OptionLabeledVector): Int = 0//vector(v)
+      override def id(v: OptionLabeledVector): Int = 0
     }
 
 }

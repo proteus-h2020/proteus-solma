@@ -16,6 +16,7 @@
 
 package eu.proteus.solma.events
 
+import org.apache.flink.ml.math.DenseVector
 import org.apache.flink.ml.math.Vector
 
 /**
@@ -31,6 +32,17 @@ trait StreamEvent extends Serializable
   def data: Vector
 }
 
+trait StreamEventWithPos[Pos] extends StreamEvent
+{
+  def pos: Pos
+}
+
+trait StreamEventLabel[Label, Pos] extends StreamEvent
+{
+  def label: Label
+  def poses: List[Pos]
+  def labels: DenseVector
+}
 
 /**
   * This is the base trait for modeling weighted stream events
