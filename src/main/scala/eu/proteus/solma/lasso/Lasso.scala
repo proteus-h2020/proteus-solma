@@ -16,15 +16,15 @@
 
 package eu.proteus.solma.lasso
 
-import breeze.linalg.{DenseMatrix, DenseVector}
-import eu.proteus.solma.pipeline.{StreamPredictor, StreamEstimator}
+import breeze.linalg.{DenseMatrix, DenseVector, Vector}
+import eu.proteus.solma.pipeline.{StreamEstimator, StreamPredictor}
 import eu.proteus.solma.events.StreamEvent
 import org.slf4j.Logger
 
 
 object Lasso {
-  type LabeledVector = (DenseVector[Double], Double)
-  type UnlabeledVector = DenseVector[Double]
+  type LabeledVector = (Vector[Double], Double)
+  type UnlabeledVector = Vector[Double]
   type OptionLabeledVector = Either[LabeledVector, UnlabeledVector]
 
   type LassoParam = (DenseMatrix[Double], DenseVector[Double])

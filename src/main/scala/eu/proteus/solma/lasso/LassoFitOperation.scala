@@ -23,9 +23,6 @@ import org.slf4j.Logger
 
 object LassoFitOperation{
 
-  /**
-    * Class logger.
-    */
   private val Log: Logger = org.slf4j.LoggerFactory.getLogger(this.getClass.getName)
 
 }

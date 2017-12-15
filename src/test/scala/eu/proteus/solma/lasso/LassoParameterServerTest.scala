@@ -90,7 +90,7 @@ class LassoParameterServerTest extends FlatSpec with PropertyChecks with Matcher
         //        The part of the training dataset is used here to test the model
         //        val percent = ModelEvaluation.processModel(model, testData, featureCount,
         val distance = LassoBasicModelEvaluation.accuracy(model,
-          trainingData.take(20).map { case Left((vec, lab)) => (vec, Some(lab)) },
+          trainingData.take(20).map { case Left((vec, lab)) => (vec.toDenseVector, Some(lab)) },
           featureCount,
           LassoBasicAlgorithm.buildLasso())
         throw SuccessException(distance)

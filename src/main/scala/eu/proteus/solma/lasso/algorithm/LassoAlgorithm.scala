@@ -19,6 +19,7 @@ package eu.proteus.solma.lasso.algorithm
 /**
   * Common trait for Lasso algorithm.
   */
+
 trait LassoAlgorithm[Vec, Param, Label, Model] extends Serializable {
 
   def delta(data: Vec,

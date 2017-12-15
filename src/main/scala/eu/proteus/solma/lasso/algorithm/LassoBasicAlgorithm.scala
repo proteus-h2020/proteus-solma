@@ -21,7 +21,7 @@ import breeze.numerics.sqrt
 import eu.proteus.solma.lasso.Lasso.{LassoModel, LassoParam, OptionLabeledVector}
 
 /**
-  * TODO description
+  * Basic Lasso algorithm
   *
   */
 object LassoBasicAlgorithm {
@@ -39,8 +39,8 @@ abstract class LassoBasicAlgorithm(protected val aggressiveness: Double)
                      model: LassoModel,
                      label: Double): Iterable[(Int, LassoParam)] = {
     val x_t: DenseVector[Double] = dataPoint match {
-      case Left((vec, _)) => vec
-      case Right(vec) => vec
+      case Left((vec, _)) => vec.toDenseVector
+      case Right(vec) => vec.toDenseVector
     }
 
     val a_t: DenseMatrix[Double] = x_t.asDenseMatrix * x_t.asDenseMatrix.t
@@ -65,8 +65,8 @@ abstract class LassoBasicAlgorithm(protected val aggressiveness: Double)
   override def predict(dataPoint: OptionLabeledVector, model: LassoModel): Double = {
 
     val x_t: DenseVector[Double] = dataPoint match {
-      case Left((vec, _)) => vec
-      case Right(vec) => vec
+      case Left((vec, _)) => vec.toDenseVector
+      case Right(vec) => vec.toDenseVector
     }
 
     val A_t = model._1
