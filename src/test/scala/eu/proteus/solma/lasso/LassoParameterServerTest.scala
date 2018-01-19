@@ -46,11 +46,11 @@ object LassoParameterServerTest {
   }
 
   val trainingData: Seq[OptionLabeledVector] =  Seq.fill(numberOfTraining)(
-    Left((randomVector, random.nextDouble()))
+    Left((((0, 0.0), randomVector), random.nextDouble()))
   )
 
   val testData: Seq[(UnlabeledVector, Double)] =  Seq.fill(numberOfTest)(
-    (randomVector, random.nextDouble())
+    (((0, 0.0), randomVector), random.nextDouble())
   )
 
 }
@@ -68,12 +68,12 @@ class LassoParameterServerTest extends FlatSpec with PropertyChecks with Matcher
     LassoParameterServer.transformLasso(None)(src, workerParallelism = 3,
       psParallelism = 3, lassoMethod = LassoBasicAlgorithm.buildLasso(), pullLimit = 10000,
       featureCount = LassoParameterServerTest.featureCount, rangePartitioning = true, iterationWaitTime = 20000
-    ).addSink(new RichSinkFunction[Either[Double, (Int, LassoParam)]] {
+    ).addSink(new RichSinkFunction[Either[((Long, Double), Double), (Int, LassoParam)]] {
       //val modelBuilder = new VectorBuilder[Double](length = featureCount)
 
       val modelBuilder = new LassoModelBuilder(initConcrete(1.0, 0.0, featureCount)(0))
 
-      override def invoke(value: Either[Double, (Int, LassoParam)]): Unit = {
+      override def invoke(value: Either[((Long, Double), Double), (Int, LassoParam)]): Unit = {
         value match {
           case Right((id, modelValue)) =>
             modelBuilder.add(id, modelValue)
@@ -90,7 +90,7 @@ class LassoParameterServerTest extends FlatSpec with PropertyChecks with Matcher
         //        The part of the training dataset is used here to test the model
         //        val percent = ModelEvaluation.processModel(model, testData, featureCount,
         val distance = LassoBasicModelEvaluation.accuracy(model,
-          trainingData.take(20).map { case Left((vec, lab)) => (vec.toDenseVector, Some(lab)) },
+          trainingData.take(20).map { case Left((vec, lab)) => (vec._2.toDenseVector, Some(lab)) },
           featureCount,
           LassoBasicAlgorithm.buildLasso())
         throw SuccessException(distance)

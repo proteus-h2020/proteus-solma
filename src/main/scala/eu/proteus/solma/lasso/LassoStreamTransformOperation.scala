@@ -27,13 +27,13 @@ import breeze.linalg.DenseVector
 
 
 class LassoStreamTransformOperation[T <: StreamEvent]
-    extends TransformDataStreamOperation[Lasso, StreamEvent, Option[Double]]{
+    extends TransformDataStreamOperation[Lasso, StreamEvent, Option[((Long, Double), Double)]]{
 
     override def transformDataStream(instance: Lasso,
                                      transformParameters: ParameterMap,
-                                     input: DataStream[StreamEvent]): DataStream[Option[Double]] = {
+                                     input: DataStream[StreamEvent]): DataStream[Option[((Long, Double), Double)]] = {
       def eventToLabelVector(event: StreamEvent): OptionLabeledVector = {
-        Right(new DenseVector(event.data.toArray.map(x => x._2)))
+        Right(((0, 0.0), new DenseVector(event.data.toArray.map(x => x._2))))
       }
 
       val transSource = input.map(x => eventToLabelVector(x))
@@ -42,7 +42,7 @@ class LassoStreamTransformOperation[T <: StreamEvent]
         featureCount = 500/*LassoParameterServerTest.featureCount*/, rangePartitioning = true, iterationWaitTime = 20000
       )
 
-      def f (x: Either[Double, (Int, LassoParam)]): Option[Double] = {
+      def f (x: Either[((Long, Double), Double), (Int, LassoParam)]): Option[((Long, Double), Double)] = {
         x match {
           case Left(label) => Some(label)
           case _ => None

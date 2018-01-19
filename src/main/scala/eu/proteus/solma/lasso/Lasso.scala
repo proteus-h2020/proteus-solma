@@ -23,8 +23,8 @@ import org.slf4j.Logger
 
 
 object Lasso {
-  type LabeledVector = (Vector[Double], Double)
-  type UnlabeledVector = Vector[Double]
+  type LabeledVector = (((Long, Double), Vector[Double]), Double)
+  type UnlabeledVector = ((Long, Double), Vector[Double])
   type OptionLabeledVector = Either[LabeledVector, UnlabeledVector]
 
   type LassoParam = (DenseMatrix[Double], DenseVector[Double])

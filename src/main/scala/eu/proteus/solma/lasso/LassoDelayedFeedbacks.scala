@@ -17,7 +17,7 @@
 package eu.proteus.solma.lasso
 
 import breeze.linalg.{DenseMatrix, DenseVector}
-import eu.proteus.solma.pipeline.StreamTransformer
+import eu.proteus.solma.pipeline.{StreamPredictor, StreamTransformer}
 import org.slf4j.Logger
 
 object LassoDelayedFeedbacks {
@@ -35,3 +35,4 @@ object LassoDelayedFeedbacks {
 }
 
 class LassoDelayedFeedbacks extends StreamTransformer[LassoDelayedFeedbacks]
+  with StreamPredictor[LassoDelayedFeedbacks]

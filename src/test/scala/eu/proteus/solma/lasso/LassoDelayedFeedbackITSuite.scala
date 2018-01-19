@@ -29,6 +29,7 @@ import eu.proteus.solma.utils.FlinkTestBase
 import eu.proteus.solma.utils.FlinkTestUtils.{SuccessException, executeWithSuccessCheck}
 import org.apache.flink.api.common.operators.Order
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
+import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
 import org.apache.flink.streaming.api.functions.co.CoFlatMapFunction
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
@@ -85,7 +86,7 @@ object LassoDelayedFeedbackITSuite {
       case 79 =>
         val label: Double = line(2).toDouble
         val vector: BreezeVector[Double] = BreezeVector[Double](line.slice(3, line.length).map(x => x.toDouble))
-        val v: OptionLabeledVector = Left((vector, label))
+        val v: OptionLabeledVector = Left((((0, 0.0), vector), label))
         v
       case _ => null //TODO Exception
     }
@@ -151,14 +152,15 @@ class LassoDelayedFeedbackITSuite extends FunSuite with Matchers with FlinkTestB
         LassoDelayedFeedbackITSuite.iterationWaitTime, LassoDelayedFeedbackITSuite.allowedLateness)
     }
 
-    val output = lasso.transform[LassoStreamEvent, Either[Double, (Int, LassoParam)] ](allEvents, null)
+    val output = lasso.transform[LassoStreamEvent, Either[((Long, Double), Double), (Int, LassoParam)] ](allEvents,
+      ParameterMap.Empty)
 
-    output.addSink(new RichSinkFunction[Either[Double, (Int, LassoParam)]] {
+    output.addSink(new RichSinkFunction[Either[((Long, Double), Double), (Int, LassoParam)]] {
 
       val modelBuilder = new LassoModelBuilder(initConcrete(LassoDelayedFeedbackITSuite.initA,
         LassoDelayedFeedbackITSuite.initB, LassoDelayedFeedbackITSuite.featureCount)(0))
 
-      override def invoke(value: Either[Double, (Int, LassoParam)]): Unit = {
+      override def invoke(value: Either[((Long, Double), Double), (Int, LassoParam)]): Unit = {
         value match {
           case Right((id, modelValue)) =>
             modelBuilder.add(id, modelValue)
@@ -170,7 +172,7 @@ class LassoDelayedFeedbackITSuite extends FunSuite with Matchers with FlinkTestB
       override def close(): Unit = {
         val model = modelBuilder.baseModel
         val distance = LassoBasicModelEvaluation.accuracy(model,
-          LassoDelayedFeedbackITSuite.trainingData.map { case Left((vec, lab)) => (vec, Some(lab)) },
+          LassoDelayedFeedbackITSuite.trainingData.map { case Left((vec, lab)) => (vec._2, Some(lab)) },
           LassoDelayedFeedbackITSuite.featureCount,
           LassoBasicAlgorithm.buildLasso())
         throw SuccessException(distance)

@@ -76,8 +76,8 @@ class FitWindowFunction extends WindowFunction[LassoStreamEvent, Iterable[Option
 
       val processedEvents: Iterable[OptionLabeledVector] = inputStreamEvents.zipWithIndex.map(zipped =>
         labelStreamEvent match {
-          case Success(x) => Left ((zipped._1.data.asBreeze, interpolatedLabels(zipped._2)))
-          case Failure(x) => Right(zipped._1.data.asBreeze)
+          case Success(x) => Left (((zipped._1.pos, zipped._1.data.asBreeze), interpolatedLabels(zipped._2)))
+          case Failure(x) => Right((zipped._1.pos, zipped._1.data.asBreeze))
         }
       )
 
@@ -90,13 +90,14 @@ class LassoDFStreamTransformOperation[T <: LassoStreamEvent](workerParallelism: 
                                                              pullLimit: Int, featureCount: Int,
                                                              rangePartitioning: Boolean, iterationWaitTime: Long,
                                                              allowedLateness: Long)
-    extends TransformDataStreamOperation[LassoDelayedFeedbacks, LassoStreamEvent, Either[Double,
+    extends TransformDataStreamOperation[LassoDelayedFeedbacks, LassoStreamEvent, Either[((Long, Double), Double),
       (Int, LassoParam)]]{
 
     override def transformDataStream(instance: LassoDelayedFeedbacks,
                                      transformParameters: ParameterMap,
-                                     rawInput: DataStream[LassoStreamEvent]): DataStream[Either[Double,
-      (Int, LassoParam)]] = {
+                                     rawInput: DataStream[LassoStreamEvent]):
+    DataStream[Either[((Long, Double), Double), (Int, LassoParam)]] = {
+
       def selectKey(event: LassoStreamEvent): Long = {
         event match {
           case Left(ev) => ev.pos._1
