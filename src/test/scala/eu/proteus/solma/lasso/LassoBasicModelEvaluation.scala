@@ -39,8 +39,8 @@ object LassoBasicModelEvaluation {
     testLines.foreach { case (vector, label) => label match {
       case Some(lab) =>
         val real = lab
-        val predicted = pac.predict(Right(vector), model)
-        sumDiffs += abs(predicted - real)
+        val predicted = pac.predict(Right(((0, 0.0), vector)), model)
+        sumDiffs += abs(predicted._2 - real)
         cnt += 1
       case _ => throw new IllegalStateException("Labels should not be missing.")
     }

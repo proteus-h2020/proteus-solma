@@ -33,14 +33,14 @@ object LassoBasicAlgorithm {
   * @param aggressiveness set the aggressiveness level of the algorithm. Denoted by C in paper.
   */
 abstract class LassoBasicAlgorithm(protected val aggressiveness: Double)
-  extends LassoAlgorithm[OptionLabeledVector, LassoParam, Double, LassoModel] with Serializable {
+  extends LassoAlgorithm[OptionLabeledVector, LassoParam, ((Long, Double), Double), LassoModel] with Serializable {
 
   override def delta(dataPoint: OptionLabeledVector,
                      model: LassoModel,
                      label: Double): Iterable[(Int, LassoParam)] = {
     val x_t: DenseVector[Double] = dataPoint match {
-      case Left((vec, _)) => vec.toDenseVector
-      case Right(vec) => vec.toDenseVector
+      case Left((vec, _)) => vec._2.toDenseVector
+      case Right(vec) => vec._2.toDenseVector
     }
 
     val a_t: DenseMatrix[Double] = x_t.asDenseMatrix * x_t.asDenseMatrix.t
@@ -62,11 +62,16 @@ abstract class LassoBasicAlgorithm(protected val aggressiveness: Double)
     *                  The active keyset of the model vector should equal to the keyset of the data.
     * @return
     */
-  override def predict(dataPoint: OptionLabeledVector, model: LassoModel): Double = {
+  override def predict(dataPoint: OptionLabeledVector, model: LassoModel): ((Long, Double), Double) = {
 
     val x_t: DenseVector[Double] = dataPoint match {
-      case Left((vec, _)) => vec.toDenseVector
-      case Right(vec) => vec.toDenseVector
+      case Left((vec, _)) => vec._2.toDenseVector
+      case Right(vec) => vec._2.toDenseVector
+    }
+
+    val id: (Long, Double) = dataPoint match {
+      case Left((vec, _)) => vec._1
+      case Right(vec) => vec._1
     }
 
     val A_t = model._1
@@ -74,7 +79,7 @@ abstract class LassoBasicAlgorithm(protected val aggressiveness: Double)
 
     val y_t = b_t.toDenseMatrix * inv(A_t) * x_t
 
-    y_t.data(0)
+    (id, y_t.data(0))
   }
 
 }

@@ -66,16 +66,16 @@ object LassoParameterServer {
                     (inputSource: DataStream[OptionLabeledVector],
                      workerParallelism: Int,
                      psParallelism: Int,
-                     lassoMethod: LassoAlgorithm[OptionLabeledVector, LassoParam, Double, LassoModel],
+                     lassoMethod: LassoAlgorithm[OptionLabeledVector, LassoParam, ((Long, Double), Double), LassoModel],
                      pullLimit: Int,
                      featureCount: Int,
                      rangePartitioning: Boolean,
-                     iterationWaitTime: Long): DataStream[Either[Double, (Int, LassoParam)]] = {
+                     iterationWaitTime: Long): DataStream[Either[((Long, Double), Double), (Int, LassoParam)]] = {
     val labelCount = 1
 
     val concreteModelBuilder = new LassoModelBuilder(initConcrete(1.0, 0.0, featureCount)(0))
 
-    transformGeneric[LassoParam, Double, LassoModel, OptionLabeledVector, Int](model)(
+    transformGeneric[LassoParam, ((Long, Double), Double), LassoModel, OptionLabeledVector, Int](model)(
       initConcrete(1.0, 0.0, featureCount), concreteModelBuilder.addParams, concreteModelBuilder
     )(
       inputSource, workerParallelism, psParallelism, lassoMethod,
@@ -231,8 +231,8 @@ object LassoParameterServer {
   private abstract class OptionLabeledVectorWithIdImpl[Label, Id]
     extends OptionLabeledVectorWithId[OptionLabeledVector, Id, Label] {
     override def vector(v: OptionLabeledVector): DenseVector[Double] = v match {
-      case Left((vec, _)) => vec.toDenseVector
-      case Right(vec) => vec.toDenseVector
+      case Left((vec, _)) => vec._2.toDenseVector
+      case Right(vec) => vec._2.toDenseVector
     }
 
     override def label(v: OptionLabeledVector): Option[Double] = v match {
@@ -241,8 +241,8 @@ object LassoParameterServer {
     }
   }
 
-  private implicit def optionLabeledEv: OptionLabeledVectorWithId[OptionLabeledVector, Int, Double] =
-    new OptionLabeledVectorWithIdImpl [Double, Int] {
+  private implicit def optionLabeledEv: OptionLabeledVectorWithId[OptionLabeledVector, Int, ((Long, Double), Double)] =
+    new OptionLabeledVectorWithIdImpl [((Long, Double), Double), Int] {
       override def id(v: OptionLabeledVector): Int = 0
     }
 
