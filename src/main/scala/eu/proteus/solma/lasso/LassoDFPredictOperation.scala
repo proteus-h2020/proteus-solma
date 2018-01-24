@@ -49,7 +49,7 @@ class LassoDFPredictOperation[T <: LassoStreamEvent](workerParallelism: Int, psP
         case Left(ev) => Some(Right(ev.pos, ev.data.asBreeze))
         case Right(ev) => None
       }
-    }.filter(x => x.isEmpty).map(x => x.get)
+    }.filter(x => x.isDefined).map(x => x.get)
 
 
     val lassoResults = LassoParameterServer.transformLasso(None)(processedInput, workerParallelism, psParallelism,
@@ -67,4 +67,3 @@ class LassoDFPredictOperation[T <: LassoStreamEvent](workerParallelism: Int, psP
 
 
 }
-
