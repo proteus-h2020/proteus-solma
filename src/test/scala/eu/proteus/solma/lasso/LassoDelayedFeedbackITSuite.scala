@@ -21,7 +21,7 @@ import org.apache.flink.ml.math.Vector
 import breeze.linalg.{Vector => BreezeVector}
 import org.apache.flink.ml.math.Breeze._
 import eu.proteus.solma.events.{StreamEventLabel, StreamEventWithPos}
-import eu.proteus.solma.lasso.Lasso.{LassoParam, OptionLabeledVector}
+import eu.proteus.solma.lasso.Lasso.{LassoModel, LassoParam, OptionLabeledVector}
 import eu.proteus.solma.lasso.LassoStreamEvent.LassoStreamEvent
 import eu.proteus.solma.lasso.algorithm.LassoBasicAlgorithm
 import eu.proteus.solma.lasso.algorithm.LassoParameterInitializer.initConcrete
@@ -31,15 +31,12 @@ import org.apache.flink.api.common.operators.Order
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
-import org.apache.flink.streaming.api.functions.co.CoFlatMapFunction
 import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.util.Collector
 import org.scalatest.{FunSuite, Matchers}
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 object LassoDelayedFeedbackITSuite {
   val log = LoggerFactory.getLogger(classOf[LassoDelayedFeedbackITSuite])
@@ -106,42 +103,33 @@ class LassoDelayedFeedbackITSuite extends FunSuite with Matchers with FlinkTestB
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
     val env2: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
 
-    val features: DataStream[Array[String]] = env.readTextFile(LassoDelayedFeedbackITSuite.featuresFilePath).map(x =>
+    val features: DataSet[Array[String]] = env2.readTextFile(LassoDelayedFeedbackITSuite.featuresFilePath).map(x =>
       x.split(",")).setParallelism(1)
     val flatness: DataSet[Array[String]] = env2.readTextFile(LassoDelayedFeedbackITSuite.flatnessFilePath).map(x =>
       x.split(",")).setParallelism(1)
 
-    val processedFlatness: DataSet[StreamEventLabel[Long, Double]] = flatness.groupBy(x => x(0)).reduceGroup {
-      (in, out: Collector[StreamEventLabel[Long, Double]]) =>
+    val joinFlatness: DataSet[StreamEventLabel[Long, Double]] = flatness.groupBy(x => x(0)).reduceGroup {
+      (in: Iterator[Array[String]], out: Collector[Option[StreamEventLabel[Long, Double]]]) =>
         val iter = in.toList
-        val poses: List[Double] = iter.map(x => x(1).toDouble)
-        val labels: DenseVector = new DenseVector(iter.map(x => x(2).toDouble).toArray)
-        val flat: LassoDelayedFeedbackITSuite.FlatnessMeasurement =
-          LassoDelayedFeedbackITSuite.FlatnessMeasurement(poses, iter.toArray.head(0).toLong, labels, null, null)
-        val ev: StreamEventLabel[Long, Double] = flat
-        out.collect(ev)
-    }.sortPartition(x => x.label, Order.ASCENDING).setParallelism(1)
+        if (iter.nonEmpty) {
+          val poses: List[Double] = iter.map(x => x(1).toDouble)
+          val labels: DenseVector = new DenseVector(iter.map(x => x(2).toDouble).toArray)
+          val flat: LassoDelayedFeedbackITSuite.FlatnessMeasurement =
+            LassoDelayedFeedbackITSuite.FlatnessMeasurement(poses, iter.toArray.head(0).toLong, labels, null, null)
+          val ev: StreamEventLabel[Long, Double] = flat
+          out.collect(Some(ev))
+        }
+        else {
+          out.collect(None)
+        }
+    }.filter(x => x.nonEmpty).map(x => x.get).sortPartition(x => x.label, Order.ASCENDING).setParallelism(1)
 
-    val flatnessStream: DataStream[StreamEventLabel[Long, Double]] =
-      env.fromCollection(processedFlatness.collect()).setParallelism(1)
-    val connectedStreams = features.map(x =>
-      LassoDelayedFeedbackITSuite.transformToStreamEvents(x)).connect(flatnessStream)
+    val processedFlatness: Seq[LassoStreamEvent] = joinFlatness.map(x => Right(x)).collect()
 
-    val allEvents = connectedStreams.flatMap(new CoFlatMapFunction[StreamEventWithPos[(Long, Double)],
-      StreamEventLabel[Long, Double], LassoStreamEvent]() {
+    val processedFeatures: Seq[LassoStreamEvent] = features.map(x =>
+      Left(LassoDelayedFeedbackITSuite.transformToStreamEvents(x))).collect()
 
-      private var cachedFlatness = mutable.HashMap[Long, Option[StreamEventLabel[Long, Double]]]()
-      private var currentCoil: Option[Long] = None
-
-      override def flatMap1(value: StreamEventWithPos[(Long, Double)], out: Collector[LassoStreamEvent]): Unit = {
-        out.collect(Left(value))
-      }
-
-      override def flatMap2(value: StreamEventLabel[Long, Double], out: Collector[LassoStreamEvent]): Unit = {
-        out.collect(Right(value))
-      }
-    }
-    )
+    val allEvents: DataStream[LassoStreamEvent] = env.fromCollection(processedFeatures ++ processedFlatness)
 
     val lasso = new LassoDelayedFeedbacks
 
@@ -159,23 +147,25 @@ class LassoDelayedFeedbackITSuite extends FunSuite with Matchers with FlinkTestB
 
       val modelBuilder = new LassoModelBuilder(initConcrete(LassoDelayedFeedbackITSuite.initA,
         LassoDelayedFeedbackITSuite.initB, LassoDelayedFeedbackITSuite.featureCount)(0))
+      var model: Option[LassoModel] = None
 
       override def invoke(value: Either[((Long, Double), Double), (Int, LassoParam)]): Unit = {
         value match {
           case Right((id, modelValue)) =>
-            modelBuilder.add(id, modelValue)
+            model = Some(modelBuilder.add(id, modelValue))
           case Left(label) =>
           // prediction channel is deaf
         }
       }
 
       override def close(): Unit = {
-        val model = modelBuilder.baseModel
-        val distance = LassoBasicModelEvaluation.accuracy(model,
-          LassoDelayedFeedbackITSuite.trainingData.map { case Left((vec, lab)) => (vec._2, Some(lab)) },
-          LassoDelayedFeedbackITSuite.featureCount,
-          LassoBasicAlgorithm.buildLasso())
-        throw SuccessException(distance)
+        if (model.nonEmpty) {
+          val distance = LassoBasicModelEvaluation.accuracy(model.get,
+            LassoDelayedFeedbackITSuite.trainingData.map { case Left((vec, lab)) => (vec._2, Some(lab)) },
+            LassoDelayedFeedbackITSuite.featureCount,
+            LassoBasicAlgorithm.buildLasso())
+          throw SuccessException(distance)
+        }
       }
     })
 

@@ -32,7 +32,12 @@ class FlatnessMappingAlgorithm(input: Vector[Double],
   }
 
   def flatnessInterpolation(x: Double, x1: Double, x2: Double, y1: Double, y2: Double): Double = {
-    ((y1 - y2) / (x1 - x2)) * (x - x1) + y1
+    if (x1 != x2) {
+      ((y1 - y2) / (x1 - x2)) * (x - x1) + y1
+    }
+    else {
+      y1
+    }
   }
 
   def apply: Vector[Double] = {
