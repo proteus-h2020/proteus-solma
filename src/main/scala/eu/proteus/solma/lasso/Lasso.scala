@@ -43,9 +43,6 @@ object Lasso {
     new LassoPredictOperation[K]
   }
 
-  implicit def transformImplementation[T <: StreamEvent] = {
-    new LassoStreamTransformOperation[T]
-  }
 }
 
 class Lasso extends StreamPredictor[Lasso] with StreamEstimator[Lasso]{

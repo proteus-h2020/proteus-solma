@@ -16,18 +16,15 @@
 
 package eu.proteus.solma.lasso
 
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
-
 import breeze.linalg._
 import hu.sztaki.ilab.ps.entities.{PSToWorker, Pull, Push, WorkerToPS}
 import hu.sztaki.ilab.ps.server.{RangePSLogicWithClose, SimplePSLogicWithClose}
 import hu.sztaki.ilab.ps.{FlinkParameterServer, ParameterServerClient, WorkerLogic}
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.scala._
-
 import eu.proteus.solma.lasso.algorithm.LassoAlgorithm
 import eu.proteus.solma.lasso.Lasso.{LassoModel, LassoParam, OptionLabeledVector}
+import eu.proteus.solma.lasso.LassoStreamEvent.LassoStreamEvent
 import eu.proteus.solma.lasso.algorithm.LassoParameterInitializer._
 
 class LassoParameterServer
@@ -63,7 +60,8 @@ object LassoParameterServer {
     */
   // scalastyle:off parameter.number
   def transformLasso(model: Option[DataStream[(Int, LassoModel)]] = None)
-                    (inputSource: DataStream[OptionLabeledVector],
+                    (inputSource: DataStream[LassoStreamEvent],
+                     lassoWorkerLogic: WorkerLogic[LassoStreamEvent, LassoParam, ((Long, Double), Double)],
                      workerParallelism: Int,
                      psParallelism: Int,
                      lassoMethod: LassoAlgorithm[OptionLabeledVector, LassoParam, ((Long, Double), Double), LassoModel],
@@ -75,10 +73,10 @@ object LassoParameterServer {
 
     val concreteModelBuilder = new LassoModelBuilder(initConcrete(1.0, 0.0, featureCount)(0))
 
-    transformGeneric[LassoParam, ((Long, Double), Double), LassoModel, OptionLabeledVector, Int](model)(
-      initConcrete(1.0, 0.0, featureCount), concreteModelBuilder.addParams, concreteModelBuilder
+    transformGeneric[LassoParam, ((Long, Double), Double), LassoModel, OptionLabeledVector, LassoStreamEvent,
+      Int](model)(initConcrete(1.0, 0.0, featureCount), concreteModelBuilder.addParams, concreteModelBuilder
     )(
-      inputSource, workerParallelism, psParallelism, lassoMethod,
+      inputSource, lassoWorkerLogic, workerParallelism, psParallelism, lassoMethod,
       pullLimit, labelCount, featureCount, rangePartitioning, iterationWaitTime
     )
   }
@@ -87,11 +85,12 @@ object LassoParameterServer {
   // scalastyle:off parameter.number
   // scalastyle:off method.length
   private def transformGeneric
-  [Param, Label, Model, Vec, VecId](model: Option[DataStream[(Int, Param)]] = None)
+  [Param, Label, Model, Vec, Event, VecId](model: Option[DataStream[(Int, Param)]] = None)
                                    (init: Int => Param,
                                     add: (Param, Param) => Param,
                                     modelBuilder: ModelBuilder[Param, Model])
-                                   (inputSource: DataStream[Vec],
+                                   (inputSource: DataStream[Event],
+                                    lassoWorkerLogic: WorkerLogic[Event, Param, Label],
                                     workerParallelism: Int,
                                     psParallelism: Int,
                                     lassoMethod: LassoAlgorithm[Vec, Param, Label, Model],
@@ -104,8 +103,9 @@ object LassoParameterServer {
                                     tiParam: TypeInformation[Param],
                                     tiLabel: TypeInformation[Label],
                                     tiVec: TypeInformation[Vec],
-                                    tiVecId: TypeInformation[VecId],
-                                    ev: OptionLabeledVectorWithId[Vec, VecId, Label])
+                                    tiEvent: TypeInformation[Event],
+                                    tiVecId: TypeInformation[VecId]/*,
+                                    ev: OptionLabeledVectorWithId[Vec, VecId, Label]*/)
   : DataStream[Either[Label, (Int, Param)]] = {
     val serverLogic =
       if (rangePartitioning) {
@@ -128,61 +128,7 @@ object LassoParameterServer {
         p
       }
 
-    val workerLogic = WorkerLogic.addPullLimiter( // adding pull limiter to avoid iteration deadlock
-      new WorkerLogic[Vec, Param, Label] {
-
-        val paramWaitingQueue = new mutable.HashMap[Int,
-          mutable.Queue[(Vec, ArrayBuffer[(Int, Param)])]]()
-
-        override def onRecv(data: Vec,
-                            ps: ParameterServerClient[Param, Label]): Unit = {
-          // pulling parameters and buffering data while waiting for parameters
-
-          val vector = ev.vector(data)
-
-          // buffer to store the already received parameters
-          val waitingValues = new ArrayBuffer[(Int, Param)]()
-
-          paramWaitingQueue.getOrElseUpdate(0,
-            mutable.Queue[(Vec, ArrayBuffer[(Int, Param)])]())
-            .enqueue((data, waitingValues))
-          ps.pull(0)
-        }
-
-        override def onPullRecv(paramId: Int,
-                                modelValue: Param,
-                                ps: ParameterServerClient[Param, Label]):Unit = {
-          // store the received parameters and train/predict when all corresponding parameters arrived for a vector
-          val q = paramWaitingQueue(paramId)
-          val (restedData, waitingValues) = q.dequeue()
-          waitingValues += paramId -> modelValue
-
-          val vector = ev.vector(restedData)
-
-          if (waitingValues.size == vector.activeSize) {
-            // we have received all the parameters
-
-            val model: Model = modelBuilder.buildModel(waitingValues, vector.length)
-
-            ev.label(restedData) match {
-              case Some(label) =>
-                // we have a labelled vector, so we update the model
-                lassoMethod.delta(restedData, model, label)foreach {
-                  case (i, v) => {
-                    ps.push(0, v)
-                    println(i)
-                  }
-                }
-              case None =>
-                // we have an unlabelled vector, so we predict based on the model
-                val lab: Label = lassoMethod.predict(restedData, model)
-                ps.output(lab)
-            }
-          }
-          if (q.isEmpty) paramWaitingQueue.remove(paramId)
-        }
-
-      }, pullLimit)
+    val workerLogic = WorkerLogic.addPullLimiter(lassoWorkerLogic, pullLimit)
 
 
     val wInPartition: PSToWorker[Param] => Int = {
@@ -219,31 +165,5 @@ object LassoParameterServer {
 
     paramPartitioner
   }
-
-  private trait OptionLabeledVectorWithId[V, Id, Label] extends Serializable {
-    def vector(v: V): DenseVector[Double]
-
-    def label(v: V): Option[Double]
-
-    def id(v: V): Id
-  }
-
-  private abstract class OptionLabeledVectorWithIdImpl[Label, Id]
-    extends OptionLabeledVectorWithId[OptionLabeledVector, Id, Label] {
-    override def vector(v: OptionLabeledVector): DenseVector[Double] = v match {
-      case Left((vec, _)) => vec._2.toDenseVector
-      case Right(vec) => vec._2.toDenseVector
-    }
-
-    override def label(v: OptionLabeledVector): Option[Double] = v match {
-      case Left((_, lab)) => Some(lab)
-      case _ => None
-    }
-  }
-
-  private implicit def optionLabeledEv: OptionLabeledVectorWithId[OptionLabeledVector, Int, ((Long, Double), Double)] =
-    new OptionLabeledVectorWithIdImpl [((Long, Double), Double), Int] {
-      override def id(v: OptionLabeledVector): Int = 0
-    }
 
 }
