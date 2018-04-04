@@ -20,7 +20,7 @@ import eu.proteus.solma.lasso.Lasso.{LassoModel, LassoParam}
 
 class LassoModelBuilder (val baseModel: LassoModel) extends ModelBuilder[LassoParam, LassoModel] {
   def addParams(param1: LassoParam, param2: LassoParam): LassoParam =
-    (param1._1 + param2._1, param1._2 + param2._2)
+    (param1._1 + param2._1, param1._2 + param2._2, param1._3)
 
   override def buildModel(params: Iterable[(Int, LassoParam)],
                           featureCount: Int): LassoModel = {

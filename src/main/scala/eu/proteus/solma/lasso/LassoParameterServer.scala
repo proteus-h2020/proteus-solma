@@ -71,10 +71,10 @@ object LassoParameterServer {
                      iterationWaitTime: Long): DataStream[Either[((Long, Double), Double), (Int, LassoParam)]] = {
     val labelCount = 1
 
-    val concreteModelBuilder = new LassoModelBuilder(initConcrete(1.0, 0.0, featureCount)(0))
+    val concreteModelBuilder = new LassoModelBuilder(initConcrete(1.0, 0.0, 1.0, featureCount)(0))
 
     transformGeneric[LassoParam, ((Long, Double), Double), LassoModel, OptionLabeledVector, LassoStreamEvent,
-      Int](model)(initConcrete(1.0, 0.0, featureCount), concreteModelBuilder.addParams, concreteModelBuilder
+      Int](model)(initConcrete(1.0, 0.0, 1.0, featureCount), concreteModelBuilder.addParams, concreteModelBuilder
     )(
       inputSource, lassoWorkerLogic, workerParallelism, psParallelism, lassoMethod,
       pullLimit, labelCount, featureCount, rangePartitioning, iterationWaitTime
