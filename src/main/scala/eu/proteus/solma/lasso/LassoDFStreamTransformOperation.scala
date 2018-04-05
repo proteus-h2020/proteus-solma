@@ -38,7 +38,7 @@ class LassoDFStreamTransformOperation[T <: LassoStreamEvent](workerParallelism: 
     DataStream[Either[((Long, Double), Double), (Int, LassoParam)]] = {
 
       val workerLogic: LassoWorkerLogic = new LassoWorkerLogic(
-        new LassoModelBuilder(initConcrete(1.0, 0.0, featureCount)(0)), LassoBasicAlgorithm.buildLasso())
+        new LassoModelBuilder(initConcrete(1.0, 0.0, 1.0, featureCount)(0)), LassoBasicAlgorithm.buildLasso())
 
       val output = LassoParameterServer.transformLasso(None)(rawInput, workerLogic, workerParallelism,
         psParallelism, lassoMethod = LassoBasicAlgorithm.buildLasso(), pullLimit, featureCount, rangePartitioning,

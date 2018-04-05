@@ -27,7 +27,7 @@ object Lasso {
   type UnlabeledVector = ((Long, Double), Vector[Double])
   type OptionLabeledVector = Either[LabeledVector, UnlabeledVector]
 
-  type LassoParam = (DenseMatrix[Double], DenseVector[Double])
+  type LassoParam = (DenseMatrix[Double], DenseVector[Double], Double)
   type LassoModel = LassoParam
 
   /**

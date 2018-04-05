@@ -48,6 +48,7 @@ object LassoDelayedFeedbackITSuite {
   val featureCount = 76
   val initA = 1.0 // initialization of a value (Lasso model)
   val initB = 0.0 // initialization of b value (Lasso model)
+  val gamma = 1.0 // initialization of gamma value
   val maxAllowedAvgDistance = 10.0
   val allowedLateness = 10 //mins
 
@@ -98,14 +99,15 @@ object LassoDelayedFeedbackITSuite {
 }
 
 class LassoDelayedFeedbackITSuite extends FunSuite with Matchers with FlinkTestBase{
+  import LassoDelayedFeedbackITSuite._
 
   test("Basic test") {
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
     val env2: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
 
-    val features: DataSet[Array[String]] = env2.readTextFile(LassoDelayedFeedbackITSuite.featuresFilePath).map(x =>
+    val features: DataSet[Array[String]] = env2.readTextFile(featuresFilePath).map(x =>
       x.split(",")).setParallelism(1)
-    val flatness: DataSet[Array[String]] = env2.readTextFile(LassoDelayedFeedbackITSuite.flatnessFilePath).map(x =>
+    val flatness: DataSet[Array[String]] = env2.readTextFile(flatnessFilePath).map(x =>
       x.split(",")).setParallelism(1)
 
     val joinFlatness: DataSet[StreamEventLabel[Long, Double]] = flatness.groupBy(x => x(0)).reduceGroup {
@@ -115,7 +117,7 @@ class LassoDelayedFeedbackITSuite extends FunSuite with Matchers with FlinkTestB
           val poses: List[Double] = iter.map(x => x(1).toDouble)
           val labels: DenseVector = new DenseVector(iter.map(x => x(2).toDouble).toArray)
           val flat: LassoDelayedFeedbackITSuite.FlatnessMeasurement =
-            LassoDelayedFeedbackITSuite.FlatnessMeasurement(poses, iter.toArray.head(0).toLong, labels, null, null)
+            FlatnessMeasurement(poses, iter.toArray.head(0).toLong, labels, null, null)
           val ev: StreamEventLabel[Long, Double] = flat
           out.collect(Some(ev))
         }
@@ -134,10 +136,8 @@ class LassoDelayedFeedbackITSuite extends FunSuite with Matchers with FlinkTestB
     val lasso = new LassoDelayedFeedbacks
 
     implicit def transformStreamImplementation[T <: LassoStreamEvent] = {
-      new LassoDFStreamTransformOperation[T](LassoDelayedFeedbackITSuite.workerParallelism,
-        LassoDelayedFeedbackITSuite.psParallelism, LassoDelayedFeedbackITSuite.pullLimit,
-        LassoDelayedFeedbackITSuite.featureCount, LassoDelayedFeedbackITSuite.rangePartitioning,
-        LassoDelayedFeedbackITSuite.iterationWaitTime, LassoDelayedFeedbackITSuite.allowedLateness)
+      new LassoDFStreamTransformOperation[T](workerParallelism, psParallelism, pullLimit, featureCount,
+        rangePartitioning, iterationWaitTime, allowedLateness)
     }
 
     val output = lasso.transform[LassoStreamEvent, Either[((Long, Double), Double), (Int, LassoParam)] ](allEvents,
@@ -145,8 +145,8 @@ class LassoDelayedFeedbackITSuite extends FunSuite with Matchers with FlinkTestB
 
     output.addSink(new RichSinkFunction[Either[((Long, Double), Double), (Int, LassoParam)]] {
 
-      val modelBuilder = new LassoModelBuilder(initConcrete(LassoDelayedFeedbackITSuite.initA,
-        LassoDelayedFeedbackITSuite.initB, LassoDelayedFeedbackITSuite.featureCount)(0))
+      val modelBuilder = new LassoModelBuilder(initConcrete(initA,
+        initB, gamma, featureCount)(0))
       var model: Option[LassoModel] = None
 
       override def invoke(value: Either[((Long, Double), Double), (Int, LassoParam)]): Unit = {
@@ -161,8 +161,7 @@ class LassoDelayedFeedbackITSuite extends FunSuite with Matchers with FlinkTestB
       override def close(): Unit = {
         if (model.nonEmpty) {
           val distance = LassoBasicModelEvaluation.accuracy(model.get,
-            LassoDelayedFeedbackITSuite.trainingData.map { case Left((vec, lab)) => (vec._2, Some(lab)) },
-            LassoDelayedFeedbackITSuite.featureCount,
+            trainingData.map { case Left((vec, lab)) => (vec._2, Some(lab)) }, featureCount,
             LassoBasicAlgorithm.buildLasso())
           throw SuccessException(distance)
         }
