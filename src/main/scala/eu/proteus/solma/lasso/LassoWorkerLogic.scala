@@ -17,6 +17,7 @@
 package eu.proteus.solma.lasso
 
 import java.util.Calendar
+
 import breeze.linalg.{DenseVector => DenseBreezeVector, Vector => BreezeVector}
 import org.apache.flink.ml.math.Breeze._
 import eu.proteus.solma.events.StreamEventWithPos
@@ -50,7 +51,9 @@ class LassoWorkerLogic (modelBuilder: ModelBuilder[LassoParam, LassoModel],
         ps.pull(0)
       case Right(v) =>
         if (unlabeledVecs.keys.exists(x => x == v.label)) {
-          val poses = unlabeledVecs(v.label)._2.toVector.map(x => x.pos._2)
+          val dequeueElements = unlabeledVecs(v.label)._2.dequeueAll(x => true).toVector
+          unlabeledVecs -= v.label
+          val poses = dequeueElements.map(x => x.pos._2)
           var labels = Vector[(Double, Double)]()
 
           for (i <- 0 until v.labels.data.length) {
@@ -59,12 +62,11 @@ class LassoWorkerLogic (modelBuilder: ModelBuilder[LassoParam, LassoModel],
 
           val interpolatedLabels = new FlatnessMappingAlgorithm(poses, labels).apply
 
-          val processedEvents: Iterable[OptionLabeledVector] = unlabeledVecs(v.label)._2.toVector.zipWithIndex.map(
+          val processedEvents: Iterable[OptionLabeledVector] = dequeueElements.zipWithIndex.map(
             zipped => {
               val data: BreezeVector[Double] = DenseBreezeVector.fill(76){0.0}
               data(zipped._1.slice.head) = zipped._1.data(zipped._1.slice.head)
-              val vec: OptionLabeledVector = Left(((zipped._1.pos, data/*zipped._1.data.asBreeze*/),
-                interpolatedLabels(zipped._2)))
+              val vec: OptionLabeledVector = Left(((zipped._1.pos, data), interpolatedLabels(zipped._2)))
               vec
             }
           )
@@ -80,6 +82,7 @@ class LassoWorkerLogic (modelBuilder: ModelBuilder[LassoParam, LassoModel],
                           ps: ParameterServerClient[LassoParam, ((Long, Double), Double)]):Unit = {
 
     var model: Option[LassoModel] = None
+
 
     while (unpredictedVecs.nonEmpty) {
       val dataPoint = unpredictedVecs.dequeue()
