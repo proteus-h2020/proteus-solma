@@ -16,6 +16,8 @@
 
 package eu.proteus.solma.lasso
 
+import java.util.Calendar
+
 import breeze.linalg.{DenseVector => DenseBreezeVector, Vector => BreezeVector}
 import org.apache.flink.ml.math.Breeze._
 import eu.proteus.solma.events.StreamEventWithPos
@@ -31,22 +33,27 @@ class LassoWorkerLogic (modelBuilder: ModelBuilder[LassoParam, LassoModel],
                           LassoModel]) extends WorkerLogic[LassoStreamEvent, LassoParam, ((Long, Double), Double)]
 {
   val unpredictedVecs = new mutable.Queue[LassoStreamEvent]()
-  val unlabeledVecs = new mutable.HashMap[Long, mutable.Queue[StreamEventWithPos[(Long, Double)]]]()
+  var unlabeledVecs = new mutable.HashMap[Long, (Long, mutable.Queue[StreamEventWithPos[(Long, Double)]])]()
   val labeledVecs = new mutable.Queue[OptionLabeledVector]
+  val maxTTL: Long = 60 * 60 * 1000
 
   override def onRecv(data: LassoStreamEvent,
                       ps: ParameterServerClient[LassoParam, ((Long, Double), Double)]): Unit = {
+    val now = Calendar.getInstance.getTimeInMillis
+
     data match {
       case Left(v) =>
         if (!unlabeledVecs.keys.exists(x => x == v.pos._1)) {
-          unlabeledVecs(v.pos._1) = new mutable.Queue[StreamEventWithPos[(Long, Double)]]()
+          unlabeledVecs(v.pos._1) = (now, new mutable.Queue[StreamEventWithPos[(Long, Double)]]())
         }
-        unlabeledVecs(v.pos._1).enqueue(v)
+        unlabeledVecs(v.pos._1)._2.enqueue(v)
         unpredictedVecs.enqueue(data)
         ps.pull(0)
       case Right(v) =>
         if (unlabeledVecs.keys.exists(x => x == v.label)) {
-          val poses = unlabeledVecs(v.label).toVector.map(x => x.pos._2)
+          val dequeueElements = unlabeledVecs(v.label)._2.dequeueAll(x => true).toVector
+          unlabeledVecs -= v.label
+          val poses = dequeueElements.map(x => x.pos._2)
           var labels = Vector[(Double, Double)]()
 
           for (i <- 0 until v.labels.data.length) {
@@ -55,12 +62,11 @@ class LassoWorkerLogic (modelBuilder: ModelBuilder[LassoParam, LassoModel],
 
           val interpolatedLabels = new FlatnessMappingAlgorithm(poses, labels).apply
 
-          val processedEvents: Iterable[OptionLabeledVector] = unlabeledVecs(v.label).toVector.zipWithIndex.map(
+          val processedEvents: Iterable[OptionLabeledVector] = dequeueElements.zipWithIndex.map(
             zipped => {
               val data: BreezeVector[Double] = DenseBreezeVector.fill(76){0.0}
               data(zipped._1.slice.head) = zipped._1.data(zipped._1.slice.head)
-              val vec: OptionLabeledVector = Left(((zipped._1.pos, data/*zipped._1.data.asBreeze*/),
-                interpolatedLabels(zipped._2)))
+              val vec: OptionLabeledVector = Left(((zipped._1.pos, data), interpolatedLabels(zipped._2)))
               vec
             }
           )
@@ -68,6 +74,7 @@ class LassoWorkerLogic (modelBuilder: ModelBuilder[LassoParam, LassoModel],
         }
         ps.pull(0)
     }
+    unlabeledVecs = unlabeledVecs.filter(x => now - x._2._1 < maxTTL)
   }
 
   override def onPullRecv(paramId: Int,
@@ -75,6 +82,7 @@ class LassoWorkerLogic (modelBuilder: ModelBuilder[LassoParam, LassoModel],
                           ps: ParameterServerClient[LassoParam, ((Long, Double), Double)]):Unit = {
 
     var model: Option[LassoModel] = None
+
 
     while (unpredictedVecs.nonEmpty) {
       val dataPoint = unpredictedVecs.dequeue()
