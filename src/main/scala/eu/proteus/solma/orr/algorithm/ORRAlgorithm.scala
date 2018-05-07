@@ -47,11 +47,7 @@ class ORRAlgorithm(instance: ORR) extends BaseORRAlgorithm[UnlabeledVector, Doub
 
     val dif: Double = 1 + (x_t.t * inve * x_t)
 
-    println(model._2)
-
     val b_t: DenseVector[Double] = model._2 + label * x_t
-
-    println(b_t)
 
     (A_t, b_t)
   }
