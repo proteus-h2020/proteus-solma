@@ -18,7 +18,7 @@ package eu.proteus.solma.osvm
 
 import org.apache.flink.ml.common.ParameterMap
 import org.apache.flink.streaming.api.scala._
-import breeze.linalg.{DenseMatrix, DenseVector, diag}
+import breeze.linalg.{DenseMatrix, DenseVector, diag, randomDouble}
 import eu.proteus.annotations.Proteus
 import eu.proteus.solma.osvm.OSVM.OSVMStreamEvent
 import eu.proteus.solma.osvm.algorithm.OSVMAlgorithm
@@ -26,19 +26,24 @@ import eu.proteus.solma.pipeline.TransformDataStreamOperation
 import hu.sztaki.ilab.ps.entities.{PSToWorker, Pull, Push, WorkerToPS}
 import hu.sztaki.ilab.ps.server.RangePSLogicWithClose
 import hu.sztaki.ilab.ps.{FlinkParameterServer, WorkerLogic}
+import org.apache.flink.api.common.functions.Partitioner
 import org.apache.flink.util.XORShiftRandom
 
 @Proteus
 class OSVMPrequentialTraining extends TransformDataStreamOperation[
       OSVM,
       OSVM.OSVMStreamEvent,
-      Either[(OSVM.UnlabeledVector, Double), (Int, OSVM.OSVMModel)]] {
+      Either[(Long, OSVM.UnlabeledVector, Double), (Int, OSVM.OSVMModel)]] {
 
 
-   def init(n : Int, bias: Double): Int => OSVM.OSVMModel =
-    _ => (DenseVector.rand(n), bias)
+   def init(n : Int, minW: Double, maxW: Double, minBias: Double, maxBias: Double): Int => OSVM.OSVMModel =
+    _ => {
+      val w = randomDouble(n, (minW, maxW))
+      val bias = randomDouble(1, (minBias, maxBias))
+      (w, bias(0))
+    }
 
-  def rangePartitionerPS[P](featureCount: Int)(psParallelism: Int): (WorkerToPS[P]) => Int = {
+  def rangePartitionerPS[P](featureCount: Int)(psParallelism: Int): WorkerToPS[P] => Int = {
     val partitionSize = Math.ceil(featureCount.toDouble / psParallelism).toInt
     val partitonerFunction = (paramId: Int) => Math.abs(paramId) / partitionSize
 
@@ -56,7 +61,7 @@ class OSVMPrequentialTraining extends TransformDataStreamOperation[
       instance: OSVM,
       transformParameters: ParameterMap,
       input: DataStream[OSVMStreamEvent]
-  ): DataStream[Either[(OSVM.UnlabeledVector, Double), (Int, OSVM.OSVMModel)]] = {
+  ): DataStream[Either[(Long, OSVM.UnlabeledVector, Double), (Int, OSVM.OSVMModel)]] = {
 
     val workerParallelism: Int = instance.getWorkerParallelism
     val psParallelism: Int  = instance.getPSParallelism
@@ -71,7 +76,7 @@ class OSVMPrequentialTraining extends TransformDataStreamOperation[
 
     val rnd = new XORShiftRandom()
 
-    val initializer = init(featureCount, rnd.nextDouble())
+    val initializer = init(featureCount, -8.0, 4.0, -1.0, 1.0)
 
     val workerLogic =  WorkerLogic.addPullLimiter(
       new OSVMWorkerLogic(
@@ -86,6 +91,18 @@ class OSVMPrequentialTraining extends TransformDataStreamOperation[
     }
 
     implicit val inputTypeInfo = createTypeInformation[OSVMStreamEvent]
-    FlinkParameterServer.transform(input, workerLogic, serverLogic, workerParallelism, psParallelism, iterationWaitTime)
+
+    val partitionedInput = input.partitionCustom(
+      new Partitioner[Long] {
+        override def partition(k: Long, total: Int): Int = {
+          (k % total).toInt
+        }
+      },
+      (event: OSVM.OSVMStreamEvent) => event match {
+        case Left(v) => v._1
+        case Right(v) => v._1
+      })
+
+    FlinkParameterServer.transform(partitionedInput, workerLogic, serverLogic, workerParallelism, psParallelism, iterationWaitTime)
   }
 }

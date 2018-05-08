@@ -32,14 +32,14 @@ class OSVMAlgorithm(instance: OSVM) extends BaseOSVMAlgorithm[UnlabeledVector, D
       t: Long
   ): (DenseVector[Double], Double) = {
 
+    val c = instance.getCParam()
     var sign = 0.0
     if (label * (dataPoint dot model._1 + model._2) < 1){
       sign = 1.0
     }
-    val dirw = model._1 - 0.5 * label * dataPoint * sign
+    val dirw = model._1 - c * label * dataPoint * sign
     val dirb = - label * sign
-
-    (dirw * (1.0 / t), dirb* (1.0 / t))
+    (dirw * (1.0 / t), dirb * (1.0 / t))
   }
 
   override def predict(
