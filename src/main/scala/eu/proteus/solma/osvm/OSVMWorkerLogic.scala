@@ -20,6 +20,7 @@ import breeze.linalg.{DenseMatrix, DenseVector}
 import eu.proteus.annotations.Proteus
 import eu.proteus.solma.osvm.OSVM.{OSVMModel, OSVMStreamEvent, UnlabeledVector}
 import eu.proteus.solma.osvm.algorithm.BaseOSVMAlgorithm
+import eu.proteus.solma.utils.BinaryConfusionMatrixBuilder
 import hu.sztaki.ilab.ps.{ParameterServerClient, WorkerLogic}
 import org.apache.flink.ml.math.Breeze._
 
@@ -28,27 +29,28 @@ import scala.collection.mutable
 @Proteus
 class OSVMWorkerLogic(
     algorithm: BaseOSVMAlgorithm[UnlabeledVector, Double, OSVMModel]
-  ) extends WorkerLogic[OSVMStreamEvent, OSVM.OSVMModel, (OSVM.UnlabeledVector, Double)] {
+  ) extends WorkerLogic[OSVMStreamEvent, OSVM.OSVMModel, (Long, OSVM.UnlabeledVector, Double)] {
 
-  val unpredictedVecs = new mutable.Queue[OSVM.UnlabeledVector]()
+  val unpredictedVecs = new mutable.Queue[(Long, OSVM.UnlabeledVector)]()
   val unlabeledVecs = new mutable.HashMap[Long, OSVM.UnlabeledVector]()
   val labeledVecs = new mutable.Queue[(OSVM.UnlabeledVector, Double, Long)]()
-  val maxTTL: Long = 60 * 60 * 1000
+
+  val cfBuilder = new BinaryConfusionMatrixBuilder
 
   override def onRecv(
     data: OSVMStreamEvent,
-    ps: ParameterServerClient[OSVM.OSVMModel, (OSVM.UnlabeledVector, Double)]): Unit = {
+    ps: ParameterServerClient[OSVM.OSVMModel, (Long, OSVM.UnlabeledVector, Double)]): Unit = {
 
     data match {
-      case Left(v) =>
+      case Left((index, dataPoint)) =>
         // store unlabelled point and pull
-        unpredictedVecs.enqueue(v._2.data.asBreeze)
-        unlabeledVecs(v._1) = v._2.data.asBreeze
-      case Right(v) =>
+        unpredictedVecs.enqueue((index, dataPoint.data.asBreeze))
+        unlabeledVecs(index) = dataPoint.data.asBreeze
+      case Right((index, expected)) =>
         // we got a labelled point
-        unlabeledVecs.remove(v._1) match {
-          case Some(unlabeledVector) => labeledVecs.enqueue((unlabeledVector, v._2, v._1))
-          case None =>
+        unlabeledVecs.remove(index) match {
+          case Some(unlabeledVector) => labeledVecs.enqueue((unlabeledVector, expected, index))
+          case None => throw new IllegalStateException("Got label for unseen data point")
         }
     }
     ps.pull(0)
@@ -57,18 +59,18 @@ class OSVMWorkerLogic(
   override def onPullRecv(
     paramId: Int,
     currentModel: OSVM.OSVMModel,
-    ps: ParameterServerClient[OSVM.OSVMModel, (OSVM.UnlabeledVector, Double)]): Unit = {
+    ps: ParameterServerClient[OSVM.OSVMModel, (Long, OSVM.UnlabeledVector, Double)]): Unit = {
 
     var modelOpt: Option[OSVM.OSVMModel] = None
 
     while (unpredictedVecs.nonEmpty) {
-      val dataPoint = unpredictedVecs.dequeue()
-      ps.output((dataPoint, algorithm.predict(dataPoint, currentModel)))
+      val (index, dataPoint) = unpredictedVecs.dequeue()
+      ps.output((index, dataPoint, algorithm.predict(dataPoint, currentModel)))
     }
 
     while (labeledVecs.nonEmpty) {
-      val restedData = labeledVecs.dequeue()
-      ps.push(0, algorithm.delta(restedData._1, currentModel, restedData._2, restedData._3))
+      val (dataPoint, prediction, index) = labeledVecs.dequeue()
+      ps.push(0, algorithm.delta(dataPoint, currentModel, prediction, index))
     }
 
   }

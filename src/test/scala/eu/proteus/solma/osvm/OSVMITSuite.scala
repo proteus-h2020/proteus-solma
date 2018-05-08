@@ -16,52 +16,102 @@
 
 package eu.proteus.solma.osvm
 
+import breeze.linalg
 import eu.proteus.solma.events.StreamEvent
-import eu.proteus.solma.utils.{FlinkSolmaUtils, FlinkTestBase}
+import eu.proteus.solma.osvm.OSVM.UnlabeledVector
+import eu.proteus.solma.utils.{BinaryConfusionMatrix, BinaryConfusionMatrixBuilder, FlinkSolmaUtils, FlinkTestBase}
+import org.apache.flink.configuration.Configuration
 import org.apache.flink.ml.math.{DenseVector, Vector}
+import org.apache.flink.streaming.api.functions.co.RichCoFlatMapFunction
 import org.apache.flink.streaming.api.scala._
-import org.scalatest.{FlatSpec, Matchers}
+import org.apache.flink.streaming.api.scala.extensions._
+import org.apache.flink.util.Collector
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.slf4j
+import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
+import scala.io.Source
 
 class OSVMITSuite extends FlatSpec
     with Matchers
+    with BeforeAndAfterAll
     with FlinkTestBase {
+
+  import OSVMITSuite._
+
+  val dataSemiShuffled = new mutable.ArrayBuffer[Either[(Long, Sample), (Long, Double)]]()
+
+  val dataNotShuffled = new mutable.ArrayBuffer[Either[(Long, Sample), (Long, Double)]]()
 
   behavior of "SOLMA Online SVM"
 
-  import OSVMITSuite.Sample
+  override def beforeAll(): Unit = {
 
+    val bufferedSource = Source.fromInputStream(getClass.getResourceAsStream("/nursey.csv"))
+    var i = 0l
 
-  it should "perform binary OSVM" in {
+    val unlabelled = new mutable.HashMap[Long, Sample]()
+    val labelled = new mutable.HashMap[Long, Double]()
 
-    val env = StreamExecutionEnvironment.getExecutionEnvironment
-    env.setParallelism(4)
+    for (line <- bufferedSource.getLines) {
+      val v = line.split(";").map(_.trim.toDouble)
+      if (v.length > 0) {
+        unlabelled(i) = Sample(0 to 7, DenseVector(v.take(8)))
+        labelled(i) = v(8)
+        dataNotShuffled.append(Left((i, unlabelled(i))))
+        dataNotShuffled.append(Right((i, labelled(i))))
+        i += 1
+      }
+    }
 
+    var j = 0
+    var k = 0
 
-//    val mixed = new Array[Either[(Long, Sample), (Long, Double)]](20)
-//
-//    for (i <- 0l until 10l) {
-//      mixed(i.toInt) = Left((i, Sample(0 to 2, DenseVector(Array.fill(3)(rnd.nextDouble)))))
-//    }
-//
-//    for (i <- 10l until 20l) {
-//      mixed(i.toInt) = Right((i, rnd.nextDouble() * 2.0 - 1.0))
-//    }
+    val max = i
+    i *= 2
 
-    val osvm = OSVM()
+    // we want to split the data points from their labels
+    // invariant: the i-th data point has to appear before than the i-th label
 
-    osvm.setFeaturesCount(3)
-    osvm.setPullLimit(10000)
-    osvm.setIterationWaitTime(20000)
+    while (i > 0) {
+      val p = rnd.nextDouble()
+      if (p > 0.8 && j < max) {
+        // take the j-th data point
+        if (j >= k) {
+          // make sure the j-th data point is after the k-th label
+          dataSemiShuffled.append(Left((j, unlabelled(j))))
+          j += 1
+          i -= 1
+        } else {
+          // let's take the k-th label
+          dataSemiShuffled.append(Right((k, labelled(k))))
+          k += 1
+          i -= 1
+        }
+      } else {
+        if (k < j) {
+          dataSemiShuffled.append(Right((k, labelled(k))))
+          k += 1
+          i -= 1
+        } else {
+          dataSemiShuffled.append(Left((j, unlabelled(j))))
+          j += 1
+          i -= 1
+        }
+      }
+    }
 
-    val ds: DataStream[Either[(Long, StreamEvent), (Long, Double)]] = env.fromCollection(OSVMITSuite.data)
-
-    osvm.transform(ds).print()
-
-
-    env.execute()
   }
+
+  it should "perform binary OSVM on plain Nursey data" in {
+   helper(dataNotShuffled)
+  }
+
+  it should "perform binary OSVM on semi shuffled Nursey data" in {
+    helper(dataSemiShuffled)
+  }
+
 
 }
 
@@ -71,20 +121,103 @@ object OSVMITSuite {
       data: Vector
   ) extends StreamEvent with Serializable
 
+  val LOG: slf4j.Logger = LoggerFactory.getLogger(OSVMITSuite.getClass)
 
   val rnd = new scala.util.Random()
 
-  val data: Seq[Either[(Long, Sample), (Long, Double)]] = List(
 
-    Left(1, Sample(0 to 2, DenseVector(rnd.nextDouble(), rnd.nextDouble(), rnd.nextDouble()))),
-    Left(2, Sample(0 to 2, DenseVector(rnd.nextDouble(), rnd.nextDouble(), rnd.nextDouble()))),
-    Left(3, Sample(0 to 2, DenseVector(rnd.nextDouble(), rnd.nextDouble(), rnd.nextDouble()))),
-    Left(4, Sample(0 to 2, DenseVector(rnd.nextDouble(), rnd.nextDouble(), rnd.nextDouble()))),
-    Right((1, rnd.nextDouble())),
-    Right((2, rnd.nextDouble())),
-    Right((3, rnd.nextDouble())),
-    Right((4, rnd.nextDouble()))
+  def helper(data: Seq[Either[(Long, StreamEvent), (Long, Double)]]): Unit = {
+
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(4)
+
+    val osvm = OSVM()
+      .setCParam(0.35)
+      .setFeaturesCount(8)
+      .setPullLimit(10000)
+      .setIterationWaitTime(20000)
 
 
-  )
+    val ds: DataStream[Either[(Long, StreamEvent), (Long, Double)]] = env.fromCollection(data)
+
+    val predictionsAndModel = osvm.transform(ds)
+
+    predictionsAndModel.flatMapWith {
+      case x =>
+        x match {
+          case Right(model) =>
+            List(model)
+          case Left(_) =>
+            List()
+        }
+    }.print
+
+    predictionsAndModel
+      .connect(ds.flatMapWith {
+        case x =>
+          x match {
+            case Right(x: (Long, Double)) => List(x)
+            case Left(_) => List()
+          }
+      })
+      .flatMap(new RichCoFlatMapFunction[Either[(Long, UnlabeledVector, Double), (Int, (linalg.DenseVector[Double], Double))], (Long, Double), BinaryConfusionMatrix] {
+
+        @transient var cfBuilder: BinaryConfusionMatrixBuilder = _
+
+        @transient var predictions: mutable.HashMap[Long, Double] = _
+        @transient var expected: mutable.HashMap[Long, Double] = _
+
+        override def open(parameters: Configuration): Unit = {
+          super.open(parameters)
+          cfBuilder = new BinaryConfusionMatrixBuilder
+          predictions = new mutable.HashMap[Long, Double]()
+          expected = new mutable.HashMap[Long, Double]()
+        }
+
+        override def flatMap1(
+          value: Either[(Long, UnlabeledVector, Double), (Int, (linalg.DenseVector[Double], Double))],
+          out: Collector[BinaryConfusionMatrix]
+        ): Unit = {
+          value match {
+            case Left((index, point, prediction)) => {
+              // due to parallel processing, it might happen that an outcome arrives here
+              // earlier than the actual prediction
+              expected.remove(index) match {
+                case Some(expectedPrediction) => {
+                  cfBuilder.add(prediction, expectedPrediction)
+                  out.collect(cfBuilder.toConfusionMatrix)
+                }
+                case None => predictions(index) = prediction
+              }
+
+            }
+            case Right(_) => // do nothing with the last updated model
+          }
+        }
+
+        override def flatMap2(
+          value: (Long, Double),
+          out: Collector[BinaryConfusionMatrix]): Unit = {
+
+          val (index, expectedPrediction) = value
+
+          predictions.remove(index) match {
+            case Some(predictedOutcome) => {
+              cfBuilder.add(predictedOutcome, expectedPrediction)
+              out.collect(cfBuilder.toConfusionMatrix)
+            }
+            case None => expected(index) = expectedPrediction
+          }
+
+
+        }
+      })
+      .setParallelism(1)
+      .print.setParallelism(1)
+
+
+    env.execute()
+  }
+
+
 }

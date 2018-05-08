@@ -47,6 +47,24 @@ class OSVM extends StreamTransformer[OSVM]{
     this.parameters.add(WorkerParallism, workerParallism)
     this
   }
+
+  /**
+    * Set the C value a
+    * @param c the c param of OSVM
+    * @return
+    */
+  def setCParam(c : Double): OSVM = {
+    this.parameters.add(CParam, c)
+    this
+  }
+
+  /** Get the C param
+    * @return The C param
+    */
+  def getCParam() : Double  = {
+    this.parameters.get(OSVM.CParam).get
+  }
+
   /**
     * Get the SeverParallism value as Int
     * @return The number of server parallelism
@@ -199,6 +217,16 @@ object OSVM extends WithParameters with Serializable {
       * Default value.
       */
     override val defaultValue: Option[Int] = Some(AllowedLateness.AllowedLatenessDefault)
+  }
+  case object CParam extends Parameter[Double] {
+    /**
+      * Default Label for unseen data
+      */
+    private val DefaultC: Double = 0.5
+    /**
+      * Default value.
+      */
+    override val defaultValue: Option[Double] = Some(CParam.DefaultC)
   }
   case object FeaturesCount extends Parameter[Int] {
     /**
