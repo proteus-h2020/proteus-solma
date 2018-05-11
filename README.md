@@ -118,11 +118,9 @@ Solma is  a scalable online machine learning algorithms (including classificatio
             </plugin>
         </plugins>
     </build>
-
-
 ```
 
-```
+
 # Algorithms
 
 ## SAX-SVM
@@ -205,3 +203,12 @@ the `SAXDictionary`
 5. Connect the evaluation stream to pass first through the `SAX`
 algorithm and then through the `SAXDictionary` to obtain the
 predictions.
+
+## References
+
+The PROTEUS SOLMA library contains extra datasets that are used for testing purposes.  
+
+### Nursey dataset
+```
+The dataset is downloaded from UCI machine learning repository: Dua, D. and Karra Taniskidou, E. (2017). UCI Machine Learning Repository [http://archive.ics.uci.edu/ml]. Irvine, CA: University of California, School of Information and Computer Science. Nursery dataset has three classes. To simulate the binary classification, we use the label "recommended" (to be class 1) versus the others (to be class -1).
+```
