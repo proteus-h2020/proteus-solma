@@ -33,9 +33,9 @@ class OSLOGAlgorithm(instance: OSLOG) extends BaseOSLOGAlgorithm[UnlabeledVector
       dataPoint: UnlabeledVector,
       model: OSLOGModel,
       label: Double
-  ): (DenseMatrix[Double], DenseVector[Double], DenseVector[Double], Double) = {
+  ): (DenseMatrix[Double], DenseVector[Double], DenseVector[Double], DenseMatrix[Double]) = {
 
-    val lambda =  model._4
+    val lambda = model._4
 
     val x_t = dataPoint.toDenseVector
 
@@ -45,11 +45,9 @@ class OSLOGAlgorithm(instance: OSLOG) extends BaseOSLOGAlgorithm[UnlabeledVector
 
     val D_t: DenseMatrix[Double] = (diag(abs(model._3)))
 
-    val Add1: DenseMatrix[Double] = lambda * diag(DenseVector.ones[Double](10)) 
-
     val Add2: DenseMatrix[Double] =  sqrt(D_t) * A_t * sqrt(D_t)
 
-    val Add: DenseMatrix[Double] = Add1 + Add2
+    val Add: DenseMatrix[Double] = lambda + Add2
 
     val InvA: DenseMatrix[Double] = pinv(Add)
 
@@ -66,7 +64,7 @@ class OSLOGAlgorithm(instance: OSLOG) extends BaseOSLOGAlgorithm[UnlabeledVector
       dataPoint: UnlabeledVector,
       model: OSLOGModel): Double = {
 
-     val w_t: DenseVector[Double] = model._3
+    val w_t: DenseVector[Double] = model._3
 
     val x_t = dataPoint.toDenseVector
     

@@ -132,7 +132,7 @@ class OSLOG extends StreamTransformer[OSLOG]{
 object OSLOG extends WithParameters with Serializable {
 
   type OSLOGStreamEvent = Either[(Long, StreamEvent), Label]
-  type OSLOGModel = (DenseMatrix[Double], DenseVector[Double], DenseVector[Double], Double)
+  type OSLOGModel = (DenseMatrix[Double], DenseVector[Double], DenseVector[Double], DenseMatrix[Double])
   type UnlabeledVector = Vector[Double]
   type Label = (Long, Double)
 
