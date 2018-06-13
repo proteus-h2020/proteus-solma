@@ -36,7 +36,8 @@ class OSLOGPrequentialTraining extends TransformDataStreamOperation[
 
 
   def init(a: Double, b: Double, c: Double, lambda: Double, n: Int): Int => OSLOG.OSLOGModel =
-    _ => (diag(DenseVector.fill(n){a}), DenseVector.fill(n){b}, DenseVector.fill(n){c}, lambda * diag(DenseVector.ones[Double](n)))
+    _ => (diag(DenseVector.fill(n){a}), DenseVector.fill(n){b}, DenseVector.fill(n){c},
+    lambda * diag(DenseVector.ones[Double](n)))
 
   def rangePartitionerPS[P](featureCount: Int)(psParallelism: Int): (WorkerToPS[P]) => Int = {
     val partitionSize = Math.ceil(featureCount.toDouble / psParallelism).toInt
