@@ -23,5 +23,5 @@ import eu.proteus.solma.oslog.OSLOG
 object OSLOGParameterInitializer {
 
   def initConcrete(a: Double, b: Double, c: Double, lambda: Double, n: Int): Int => OSLOG.OSLOGModel =
-    _ => (diag(DenseVector.fill(n){a}), DenseVector.fill(n){b}, DenseVector.fill(n){c}, lambda)
+    _ => (diag(DenseVector.fill(n){a}), DenseVector.fill(n){b}, DenseVector.fill(n){c}, lambda * diag(DenseVector.ones[Double](n)))
 }
