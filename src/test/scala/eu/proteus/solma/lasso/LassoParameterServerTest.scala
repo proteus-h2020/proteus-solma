@@ -84,7 +84,8 @@ class LassoParameterServerTest extends FlatSpec with PropertyChecks with Matcher
     val src: DataStream[LassoStreamEvent] = env.fromCollection(trainingData)
 
     val workerLogic: LassoWorkerLogic = new LassoWorkerLogic(
-      new LassoModelBuilder(initConcrete(1.0, 0.0, 1.0, featureCount)(0)), LassoBasicAlgorithm.buildLasso())
+      new LassoModelBuilder(initConcrete(1.0, 0.0, 1.0, featureCount)(0)), LassoBasicAlgorithm.buildLasso(),
+      featureCount)
 
     LassoParameterServer.transformLasso(None)(src, workerLogic, workerParallelism = 3,
       psParallelism = 3, lassoMethod = LassoBasicAlgorithm.buildLasso(), pullLimit = 10000,
