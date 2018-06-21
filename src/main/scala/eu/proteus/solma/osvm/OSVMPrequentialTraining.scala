@@ -103,6 +103,13 @@ class OSVMPrequentialTraining extends TransformDataStreamOperation[
         case Right(v) => v._1
       })
 
-    FlinkParameterServer.transform(partitionedInput, workerLogic, serverLogic, workerParallelism, psParallelism, iterationWaitTime)
+    FlinkParameterServer.transform(
+      partitionedInput,
+      workerLogic,
+      serverLogic,
+      workerParallelism,
+      psParallelism,
+      iterationWaitTime
+    )
   }
 }
