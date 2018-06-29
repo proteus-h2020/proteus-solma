@@ -42,7 +42,7 @@ class PAAlgorithm(instance: PA) extends BasePAAlgorithm[UnlabeledVector, Double,
       dirw = alphat * label * dataPoint.toDenseVector
     } else if (algo == "PAII"){
       val loss = max(1.0 - label * dataPoint dot model, 0.0)
-      val alphat = loss/(norm(dataPoint, 2.0) + 1/(2*c))
+      val alphat = loss / (norm(dataPoint, 2.0) + 1/(2*c))
       dirw = alphat * label * dataPoint.toDenseVector
     } else if (algo == "PAI"){
       val loss = max(1.0 - label * dataPoint dot model, 0.0)
