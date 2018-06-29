@@ -49,7 +49,7 @@ class PAITSuite extends FlatSpec
   override def beforeAll(): Unit = {
 
     val bufferedSource = Source.fromInputStream(getClass.getResourceAsStream("/nursey.csv"))
-    var i = 0l
+    var i = 0L
 
     val unlabelled = new mutable.HashMap[Long, Sample]()
     val labelled = new mutable.HashMap[Long, Double]()
@@ -161,7 +161,8 @@ object PAITSuite {
             case Left(_) => List()
           }
       })
-      .flatMap(coFlatMapper = new RichCoFlatMapFunction[Either[(Long, UnlabeledVector, Double), (Int, linalg.DenseVector[Double])], (Long, Double), BinaryConfusionMatrix] {
+      .flatMap(coFlatMapper = new RichCoFlatMapFunction[Either[(Long, UnlabeledVector, Double),
+        (Int, linalg.DenseVector[Double])], (Long, Double), BinaryConfusionMatrix] {
 
         @transient var cfBuilder: BinaryConfusionMatrixBuilder = _
 
