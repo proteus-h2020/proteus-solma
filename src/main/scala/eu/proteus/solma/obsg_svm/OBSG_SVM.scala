@@ -242,19 +242,6 @@ object OBSG_SVM extends WithParameters with Serializable {
     override val defaultValue: Option[Double] = Some(CParam.DefaultC)
   }
 
-  case object XpParam extends Parameter[Double] {
-    /**
-      * Default Label for unseen data
-      */
-    private val DefaultXp: DenseVector[Double] = DenseVector.zeros[Double](this.parameters)
-    /**
-      * Default value.
-      */
-    override val defaultValue: Option[Double] = Some(XpParam.DefaultXp)
-  }
-
-
-
   case object FeaturesCount extends Parameter[Int] {
     /**
       * Default output are the Weights
@@ -270,5 +257,15 @@ object OBSG_SVM extends WithParameters with Serializable {
     new OBSG_SVMPrequentialTraining
   }
 
+  case object XpParam extends Parameter[DenseVector[Double]] {
+    /**
+      * Default Label for unseen data
+      */
+    private val DefaultXp: DenseVector[Double] = DenseVector.zeros[Double](8)
+    /**
+      * Default value.
+      */
+    override val defaultValue: Option[DenseVector[Double]] = Some(XpParam.DefaultXp)
+  }
 
 }
