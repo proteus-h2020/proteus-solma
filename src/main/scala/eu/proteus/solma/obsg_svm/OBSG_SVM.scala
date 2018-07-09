@@ -65,6 +65,11 @@ class OBSG_SVM extends StreamTransformer[OBSG_SVM]{
     this.parameters.get(OBSG_SVM.CParam).get
   }
 
+  /**
+    * Set the Xp value a
+    * @param xp the xp param of OBSG_SVM
+    * @return
+    */
   def setXpParam(xp : DenseVector[Double]): OBSG_SVM = {
     this.parameters.add(XpParam, xp)
     this
@@ -77,6 +82,22 @@ class OBSG_SVM extends StreamTransformer[OBSG_SVM]{
     this.parameters.get(OBSG_SVM.XpParam).get
   }
 
+  /**
+    * Set the Yp value a
+    * @param yp the yp param of OBSG_SVM
+    * @return
+    */
+  def setYpParam(yp : Double): OBSG_SVM = {
+    this.parameters.add(YpParam, yp)
+    this
+  }
+
+  /** Get the Yp param
+    * @return The Yp param
+    */
+  def getYpParam() : Double  = {
+    this.parameters.get(OBSG_SVM.XpParam).get
+  }
 
   /**
     * Get the SeverParallism value as Int
@@ -266,6 +287,16 @@ object OBSG_SVM extends WithParameters with Serializable {
       * Default value.
       */
     override val defaultValue: Option[DenseVector[Double]] = Some(XpParam.DefaultXp)
+  }
+  case object YpParam extends Parameter[Double] {
+    /**
+      * Default Label for unseen data
+      */
+    private val DefaultYp: Double = 1.0
+    /**
+      * Default value.
+      */
+    override val defaultValue: Option[Double] = Some(YpParam.DefaultYp)
   }
 
 }
