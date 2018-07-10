@@ -78,8 +78,8 @@ class OBSG_SVM extends StreamTransformer[OBSG_SVM]{
   /** Get the Xp param
     * @return The Xp param
     */
-  def getXpParam() : DenseVector[Double]  = {
-    this.parameters.get(OBSG_SVM.XpParam).get
+  def getXpParam() : Option[DenseVector[Double]]  = {
+    this.parameters.get(OBSG_SVM.XpParam)
   }
 
   /**
@@ -280,13 +280,9 @@ object OBSG_SVM extends WithParameters with Serializable {
 
   case object XpParam extends Parameter[DenseVector[Double]] {
     /**
-      * Default Label for unseen data
-      */
-    private val DefaultXp: DenseVector[Double] = DenseVector.zeros[Double](8)
-    /**
       * Default value.
       */
-    override val defaultValue: Option[DenseVector[Double]] = Some(XpParam.DefaultXp)
+    override val defaultValue: Option[DenseVector[Double]] = None
   }
   case object YpParam extends Parameter[Double] {
     /**
