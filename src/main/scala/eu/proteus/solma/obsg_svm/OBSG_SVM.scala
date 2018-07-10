@@ -96,7 +96,7 @@ class OBSG_SVM extends StreamTransformer[OBSG_SVM]{
     * @return The Yp param
     */
   def getYpParam() : Double  = {
-    this.parameters.get(OBSG_SVM.XpParam).get
+    this.parameters.get(OBSG_SVM.YpParam).get
   }
 
   /**

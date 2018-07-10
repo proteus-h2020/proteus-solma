@@ -47,14 +47,13 @@ class OBSG_SVMAlgorithm(instance: OBSG_SVM) extends BaseOBSG_SVMAlgorithm[Unlabe
 
        c += - (1.0 / t) * (yp * xp) dot (label * dataPoint)
 
-
       instance.setCParam(c)
       instance.setXpParam(dataPoint.toDenseVector)
       instance.setYpParam(label)
     }
 
 
-    
+
     (dirw * (1.0 / t), dirb * (1.0 / t))
   }
 
