@@ -33,7 +33,13 @@ class OBSG_SVMAlgorithm(instance: OBSG_SVM) extends BaseOBSG_SVMAlgorithm[Unlabe
                     ): (DenseVector[Double], Double) = {
 
     var c = instance.getCParam()
-    val xp = instance.getXpParam()
+    val XpParam = instance.getXpParam()
+    var xp = DenseVector[Double](dataPoint.length)
+    if (XpParam == None) {
+      xp = DenseVector.zeros[Double](dataPoint.length)
+    } else {
+      xp = XpParam.get
+    }
     val yp = instance.getYpParam()
 
     var dirw = DenseVector.zeros[Double](dataPoint.length)
