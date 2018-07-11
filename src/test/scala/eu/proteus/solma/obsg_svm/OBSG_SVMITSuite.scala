@@ -132,7 +132,7 @@ object OBSG_SVMITSuite {
     env.setParallelism(4)
 
     val obsg_svm = OBSG_SVM()
-      .setCParam(1)
+      .setCParam(0.1)
       .setFeaturesCount(8)
       .setPullLimit(10000)
       .setIterationWaitTime(20000)
