@@ -61,7 +61,8 @@ class OBSG_SVMPrequentialTraining extends TransformDataStreamOperation[
                                     instance: OBSG_SVM,
                                     transformParameters: ParameterMap,
                                     input: DataStream[OBSG_SVMStreamEvent]
-                                  ): DataStream[Either[(Long, OBSG_SVM.UnlabeledVector, Double), (Int, OBSG_SVM.OBSG_SVMModel)]] = {
+                                  ): DataStream[Either[(Long, OBSG_SVM.UnlabeledVector, Double),
+                                    (Int, OBSG_SVM.OBSG_SVMModel)]] = {
 
     val workerParallelism: Int = instance.getWorkerParallelism
     val psParallelism: Int  = instance.getPSParallelism

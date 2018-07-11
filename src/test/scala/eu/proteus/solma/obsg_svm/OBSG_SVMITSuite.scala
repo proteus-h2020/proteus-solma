@@ -176,7 +176,8 @@ object OBSG_SVMITSuite {
         }
 
         override def flatMap1(
-                               value: Either[(Long, UnlabeledVector, Double), (Int, (linalg.DenseVector[Double], Double))],
+                               value: Either[(Long, UnlabeledVector, Double),
+                                 (Int, (linalg.DenseVector[Double], Double))],
                                out: Collector[BinaryConfusionMatrix]
                              ): Unit = {
           value match {

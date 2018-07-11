@@ -29,7 +29,8 @@ import scala.collection.mutable
 @Proteus
 class OBSG_SVMWorkerLogic(
                        algorithm: BaseOBSG_SVMAlgorithm[UnlabeledVector, Double, OBSG_SVMModel]
-                     ) extends WorkerLogic[OBSG_SVMStreamEvent, OBSG_SVM.OBSG_SVMModel, (Long, OBSG_SVM.UnlabeledVector, Double)] {
+                     ) extends WorkerLogic[OBSG_SVMStreamEvent, OBSG_SVM.OBSG_SVMModel,
+                       (Long, OBSG_SVM.UnlabeledVector, Double)] {
 
   val unpredictedVecs = new mutable.Queue[(Long, OBSG_SVM.UnlabeledVector)]()
   val unlabeledVecs = new mutable.HashMap[Long, OBSG_SVM.UnlabeledVector]()
@@ -39,7 +40,8 @@ class OBSG_SVMWorkerLogic(
 
   override def onRecv(
                        data: OBSG_SVMStreamEvent,
-                       ps: ParameterServerClient[OBSG_SVM.OBSG_SVMModel, (Long, OBSG_SVM.UnlabeledVector, Double)]): Unit = {
+                       ps: ParameterServerClient[OBSG_SVM.OBSG_SVMModel,
+                         (Long, OBSG_SVM.UnlabeledVector, Double)]): Unit = {
 
     data match {
       case Left((index, dataPoint)) =>
@@ -59,7 +61,8 @@ class OBSG_SVMWorkerLogic(
   override def onPullRecv(
                            paramId: Int,
                            currentModel: OBSG_SVM.OBSG_SVMModel,
-                           ps: ParameterServerClient[OBSG_SVM.OBSG_SVMModel, (Long, OBSG_SVM.UnlabeledVector, Double)]): Unit = {
+                           ps: ParameterServerClient[OBSG_SVM.OBSG_SVMModel,
+                             (Long, OBSG_SVM.UnlabeledVector, Double)]): Unit = {
 
     var modelOpt: Option[OBSG_SVM.OBSG_SVMModel] = None
 
