@@ -74,8 +74,6 @@ class OSVMPrequentialTraining extends TransformDataStreamOperation[
       (currModel._1 - gradient._1, currModel._2 - gradient._2)
     }
 
-    val rnd = new XORShiftRandom()
-
     val initializer = init(featureCount, -8.0, 4.0, -1.0, 1.0)
 
     val workerLogic =  WorkerLogic.addPullLimiter(
