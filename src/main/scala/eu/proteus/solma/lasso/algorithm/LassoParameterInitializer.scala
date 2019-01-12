@@ -22,5 +22,5 @@ import eu.proteus.solma.lasso.Lasso.LassoParam
 object LassoParameterInitializer {
 
   def initConcrete(a: Double, b: Double, gamma: Double, n: Int): Int => LassoParam =
-    _ => (diag(DenseVector.fill(n){a}), DenseVector.fill(n){b}, gamma)
+    _ => (diag(DenseVector.fill(n)(a)), DenseVector.fill(n)(b), gamma)
 }

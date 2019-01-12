@@ -16,19 +16,28 @@
 
 package eu.proteus.solma.lasso
 
+import breeze.linalg.{DenseVector, diag}
+import breeze.stats.distributions.Uniform
 import eu.proteus.solma.lasso.Lasso.LassoParam
 import eu.proteus.solma.lasso.LassoStreamEvent.LassoStreamEvent
 import eu.proteus.solma.lasso.algorithm.LassoParameterInitializer.initConcrete
 import eu.proteus.solma.lasso.algorithm.LassoBasicAlgorithm
 import eu.proteus.solma.pipeline.TransformDataStreamOperation
 import org.apache.flink.ml.common.ParameterMap
-import org.apache.flink.streaming.api.scala.DataStream
+import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.streaming.api.scala._
 
 
-class LassoDFStreamTransformOperation[T <: LassoStreamEvent](workerParallelism: Int, psParallelism: Int,
-                                                             pullLimit: Int, featureCount: Int,
-                                                             rangePartitioning: Boolean, iterationWaitTime: Long,
-                                                             allowedLateness: Long)
+class LassoDFStreamTransformOperation[T <: LassoStreamEvent](workerParallelism: Int,
+                                                             psParallelism: Int,
+                                                             pullLimit: Int,
+                                                             featureCount: Int,
+                                                             rangePartitioning: Boolean,
+                                                             iterationWaitTime: Long,
+                                                             allowedLateness: Long,
+                                                             alpha: Double=1.0,
+                                                             beta: Double=0.0,
+                                                             gamma: Double=1.0)
     extends TransformDataStreamOperation[LassoDelayedFeedbacks, LassoStreamEvent, Either[((Long, Double), Double),
       (Int, LassoParam)]]{
 
@@ -38,10 +47,20 @@ class LassoDFStreamTransformOperation[T <: LassoStreamEvent](workerParallelism: 
     DataStream[Either[((Long, Double), Double), (Int, LassoParam)]] = {
 
       val workerLogic: LassoWorkerLogic = new LassoWorkerLogic(
-        new LassoModelBuilder(initConcrete(1.0, 0.0, 1.0, featureCount)(0)), LassoBasicAlgorithm.buildLasso(),
+        new LassoModelBuilder(initConcrete(alpha, beta, gamma, featureCount)(0)), LassoBasicAlgorithm.buildLasso(),
         featureCount)
 
-      val output = LassoParameterServer.transformLasso(None)(rawInput, workerLogic, workerParallelism,
+      implicit val mType = createTypeInformation[(Int, LassoParam)]
+      val models = new Array[(Int, LassoParam)](workerParallelism)
+      for (i <- 0 until workerParallelism) {
+        val A = diag(DenseVector.rand[Double](featureCount, Uniform(-alpha, alpha)))
+        val B = DenseVector.rand[Double](featureCount, Uniform(-beta, beta))
+        val m = (0, (A, B, gamma))
+        models(i) = m
+      }
+      val mStream = rawInput.executionEnvironment.fromCollection(models)
+
+      val output = LassoParameterServer.transformLasso(Some(mStream))(rawInput, workerLogic, workerParallelism,
         psParallelism, lassoMethod = LassoBasicAlgorithm.buildLasso(), pullLimit, featureCount, rangePartitioning,
         iterationWaitTime)
 
