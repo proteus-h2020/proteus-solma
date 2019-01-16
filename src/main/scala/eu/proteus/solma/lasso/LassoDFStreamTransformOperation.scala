@@ -24,7 +24,6 @@ import eu.proteus.solma.lasso.algorithm.LassoParameterInitializer.initConcrete
 import eu.proteus.solma.lasso.algorithm.LassoBasicAlgorithm
 import eu.proteus.solma.pipeline.TransformDataStreamOperation
 import org.apache.flink.ml.common.ParameterMap
-import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.streaming.api.scala._
 
 
@@ -52,10 +51,10 @@ class LassoDFStreamTransformOperation[T <: LassoStreamEvent](workerParallelism: 
 
       implicit val mType = createTypeInformation[(Int, LassoParam)]
       val models = new Array[(Int, LassoParam)](workerParallelism)
+      val A = diag(DenseVector.rand[Double](featureCount, Uniform(-alpha, alpha)))
+      val B = DenseVector.rand[Double](featureCount, Uniform(-beta, beta))
+      val m = (0, (A, B, gamma))
       for (i <- 0 until workerParallelism) {
-        val A = diag(DenseVector.rand[Double](featureCount, Uniform(-alpha, alpha)))
-        val B = DenseVector.rand[Double](featureCount, Uniform(-beta, beta))
-        val m = (0, (A, B, gamma))
         models(i) = m
       }
       val mStream = rawInput.executionEnvironment.fromCollection(models)
