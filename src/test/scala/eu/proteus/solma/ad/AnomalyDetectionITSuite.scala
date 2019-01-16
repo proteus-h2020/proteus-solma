@@ -62,7 +62,7 @@ class AnomalyDetectionITSuite
     for (idx <- 0 until 4) { // 4 workers
       var instance = AnomalyDetection()
       var model = AnomalyDetection.init(ell, num_comp)
-      for (vector <- AnomalyDetectionITSuite.trainingData.slice(idx*70000, (idx+1)*70000+1)) {
+      for (vector <- AnomalyDetectionITSuite.trainingData.slice(idx*70000, (idx + 1)*70000 + 1)) {
         model = instance.append(vector, model)
       }
       if (idx == 0) {
