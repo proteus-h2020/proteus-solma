@@ -93,7 +93,7 @@ class AnomalyDetectionITSuite
       val q = ccipca.q(eigenvectors, obs)
       // println("Abnormal", "Q", q, "Q Limit", qlim)
       val t2 = ccipca.t2(eigenvectors,eigenvalues,obs)
-      println("Abnormal", "Q", q, "Q Limit", qlim)
+      println("Abnormal", "T2", t2, "T2 Limit", tlim)
     }
 
   }
